@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: neurixhub-miniapp
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: WEB_APP_URL
+        sync: false
+      - key: ACTIVATION_SITE_URL
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: ADMIN_CHAT_ID
+        sync: false
+      - key: SELLER_URL
+        sync: false
+      - key: REQUIRED_CHANNEL_USERNAME
+        value: "@NeurixHub"
+      - key: REQUIRED_CHANNEL_URL
+        value: https://t.me/NeurixHub
+      - key: CRYPTO_PAY_TOKEN
+        sync: false
+      - key: CRYPTO_PAY_API_URL
+        value: https://pay.crypt.bot/api
+      - key: CRYPTO_PAY_ASSET
+        value: USDT
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_STORE_KEY
+        value: neurixhub
+      - key: ACCOUNT_DELIVERY_THRESHOLD
+        value: "0.1"
