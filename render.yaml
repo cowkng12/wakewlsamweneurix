@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: neurixhub-miniapp
+    name: nervahub-miniapp
     env: node
     plan: free
     buildCommand: npm install && npm run build
@@ -21,9 +21,9 @@ services:
       - key: SELLER_URL
         sync: false
       - key: REQUIRED_CHANNEL_USERNAME
-        value: "@NeurixHub"
+        value: "@NervaHub"
       - key: REQUIRED_CHANNEL_URL
-        value: https://t.me/NeurixHub
+        value: https://t.me/NervaHub
       - key: CRYPTO_PAY_TOKEN
         sync: false
       - key: CRYPTO_PAY_API_URL
@@ -35,6 +35,6 @@ services:
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: SUPABASE_STORE_KEY
-        value: neurixhub
+        value: nervahub
       - key: ACCOUNT_DELIVERY_THRESHOLD
         value: "0.1"

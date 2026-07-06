@@ -1,0 +1,50 @@
+{
+  "projectName": "NervaHub",
+  "envFile": "my-bot.env",
+  "folderName": "NervaHub-New",
+  "packageName": "nervahub-miniapp",
+  "storeKey": "nervahub",
+  "promoPrefix": "NERVA",
+  "sellerUrl": "https://t.me/metifrysell",
+  "telegram": {
+    "channelUsername": "@NervaHub",
+    "channelUrl": "https://t.me/NervaHub"
+  },
+  "github": {
+    "owner": "cowkng12",
+    "repo": "new-nervahub-miniapp",
+    "createRepo": false,
+    "push": false,
+    "visibility": "public"
+  },
+  "render": {
+    "serviceName": "new-nervahub-miniapp",
+    "webAppUrl": "https://new-nervahub-miniapp.onrender.com",
+    "region": "virginia",
+    "plan": "free",
+    "api": {
+      "enabled": false,
+      "apiKeyEnv": "RENDER_API_KEY",
+      "deploy": true,
+      "reuseExisting": true,
+      "failOnMissingSecrets": true
+    }
+  },
+  "secrets": {
+    "TELEGRAM_BOT_TOKEN": "NEW_BOT_TELEGRAM_TOKEN",
+    "ADMIN_CHAT_ID": "ADMIN_CHAT_ID",
+    "CRYPTO_PAY_TOKEN": "CRYPTO_PAY_TOKEN"
+  },
+  "colors": {
+    "primary": "#2563eb",
+    "bright": "#38bdf8",
+    "deep": "#1d4ed8"
+  },
+  "supabase": {
+    "includeInRender": true
+  },
+  "git": {
+    "init": true,
+    "commitMessage": "Prepare NervaHub mini app"
+  }
+}

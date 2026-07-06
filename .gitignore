@@ -12,6 +12,7 @@ data
 dist
 dist-ssr
 .env
+factory/*.env
 *.local
 
 # Editor directories and files

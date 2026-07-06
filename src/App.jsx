@@ -301,7 +301,7 @@ const productAvatars = {
 const promoBonuses = {
   SUB200: 25,
   SUBS200: 25,
-  NEURIX20: 20,
+  NERVA20: 20,
   KIMI15: 15,
   START10: 10,
 }
@@ -309,8 +309,8 @@ const promoBonuses = {
 const translations = {
   ru: {
     languageLabel: 'RU',
-    eyebrow: 'NeurixHub',
-    title: 'NeurixHub: подписки на нейросервисы',
+    eyebrow: 'NervaHub',
+    title: 'NervaHub: подписки на нейросервисы',
     hero: 'Выберите товар и подайте заявку на покупку.',
     selectPlan: 'Выбрать тариф',
     guarantee: 'Полная гарантия и возможность замены товара при возникновении проблем.',
@@ -417,8 +417,8 @@ const translations = {
   },
   en: {
     languageLabel: 'EN',
-    eyebrow: 'NeurixHub',
-    title: 'NeurixHub: AI service subscriptions',
+    eyebrow: 'NervaHub',
+    title: 'NervaHub: AI service subscriptions',
     hero: 'Choose a product and submit a purchase request.',
     selectPlan: 'Select plan',
     guarantee: 'Full guarantee and replacement if any issues arise.',
@@ -525,8 +525,8 @@ const translations = {
   },
   zh: {
     languageLabel: '中文',
-    eyebrow: 'NeurixHub',
-    title: 'NeurixHub：AI 服务订阅',
+    eyebrow: 'NervaHub',
+    title: 'NervaHub：AI 服务订阅',
     hero: '选择商品并提交购买申请。',
     selectPlan: '选择套餐',
     guarantee: '提供完整保障，如遇问题可更换商品。',
@@ -795,6 +795,20 @@ function currentTelegramInitData() {
   return window.Telegram?.WebApp?.initData || ''
 }
 
+function BrandLogo() {
+  return (
+    <div className="activation-logo">
+      <svg className="brand-rocket" viewBox="0 0 28 28" aria-hidden="true">
+        <path d="M16.2 3.8c3.9.5 6.8 3.5 7.1 7.4l-5.8 5.8-6.9-6.9 5.6-6.3Z" />
+        <path d="M9.6 11.5 5.2 13l3.4 3.4 1.2-2.8M16.5 18.4l-2.8 1.2 3.4 3.4 1.5-4.4" />
+        <path d="M11 17 7.5 20.5" />
+        <circle cx="17.6" cy="9.8" r="1.7" />
+      </svg>
+      <span>NervaHub</span>
+    </div>
+  )
+}
+
 function ActivationPage() {
   const [language, setLanguage] = useState('en')
   const [key, setKey] = useState('')
@@ -867,7 +881,7 @@ function ActivationPage() {
         {translations[language].languageLabel}
       </button>
       <section className="activation-card">
-        <div className="activation-logo">NeurixHub</div>
+        <BrandLogo />
         <p className="activation-eyebrow">{text.eyebrow}</p>
         <h1>{text.title}</h1>
         <p className="activation-copy">
@@ -1090,7 +1104,7 @@ function WalletPaymentPage() {
         {translations[language].languageLabel}
       </button>
       <section className="wallet-pay-card">
-        <div className="activation-logo">NeurixHub</div>
+        <BrandLogo />
         <p className="activation-eyebrow">{text.eyebrow}</p>
         <h1>{text.title}</h1>
         {payment ? (
@@ -1437,7 +1451,7 @@ function StoreApp() {
         </>
       ) : (
         <section className="empty-panel">
-          <p className="eyebrow">NeurixHub</p>
+          <p className="eyebrow">NervaHub</p>
           <h2>{text.ordersTitle}</h2>
           {orders.length ? (
             <div className="orders-list">
@@ -1535,7 +1549,7 @@ function StoreApp() {
 
 function App() {
   useEffect(() => {
-    document.title = 'NeurixHub'
+    document.title = 'NervaHub'
   }, [])
 
   if (window.location.pathname === '/activate') {

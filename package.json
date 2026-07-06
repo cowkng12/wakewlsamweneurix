@@ -1,5 +1,5 @@
 {
-  "name": "neurixhub-miniapp",
+  "name": "nervahub-miniapp",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,6 +9,8 @@
   "scripts": {
     "dev": "vite",
     "dev:server": "node server.js",
+    "create:bot-site": "node factory/create-bot-site.js",
+    "launch:bot-site": "node factory/create-bot-site.js",
     "start": "node server.js",
     "build": "vite build",
     "lint": "eslint .",
