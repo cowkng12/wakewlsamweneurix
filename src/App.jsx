@@ -1207,8 +1207,20 @@ function StoreApp() {
     : products.filter((product) => product.group === activeGroup)
 
   useEffect(() => {
-    window.Telegram?.WebApp?.ready?.()
-    window.Telegram?.WebApp?.expand?.()
+    const telegramApp = window.Telegram?.WebApp
+    const supportsVersion = (version) => telegramApp?.isVersionAtLeast?.(version)
+
+    telegramApp?.ready?.()
+    telegramApp?.expand?.()
+
+    if (supportsVersion('6.1')) {
+      telegramApp?.setHeaderColor?.('#02040a')
+      telegramApp?.setBackgroundColor?.('#02040a')
+    }
+
+    if (supportsVersion('7.10')) {
+      telegramApp?.setBottomBarColor?.('#02040a')
+    }
   }, [])
 
   useEffect(() => {

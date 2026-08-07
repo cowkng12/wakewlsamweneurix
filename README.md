@@ -1,5 +1,7 @@
 # NervaHub Mini App
 
+Telegram bot: `@NervaHub_bot`.
+
 Telegram Mini App для витрины AI-подписок, пополнения баланса, оплат и выдачи ключей активации.
 
 ## Локальный запуск
@@ -48,6 +50,7 @@ Health Check Path: /health
 
 ```text
 TELEGRAM_BOT_TOKEN=токен_от_BotFather
+TELEGRAM_BOT_USERNAME=@NervaHub_bot
 ADMIN_CHAT_ID=ваш_telegram_id
 WEB_APP_URL=https://ваш-render-url
 SELLER_URL=https://t.me/metifrysell

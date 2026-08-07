@@ -10,6 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 const port = Number(process.env.PORT || 3001)
 const botToken = process.env.TELEGRAM_BOT_TOKEN?.trim()
+const botUsername = process.env.TELEGRAM_BOT_USERNAME?.trim() || '@NervaHub_bot'
 const adminChatId = process.env.ADMIN_CHAT_ID?.trim()
 const webAppUrl = process.env.WEB_APP_URL?.trim() || 'http://localhost:5173'
 const sellerUrl = process.env.SELLER_URL?.trim() || 'https://t.me/metifrysell'
@@ -672,7 +673,7 @@ app.get('/api/config', (request, response) => {
 })
 
 app.get('/health', (request, response) => {
-  response.json({ ok: true, service: 'nervahub-miniapp' })
+  response.json({ ok: true, service: 'nervahub-miniapp', bot: botUsername })
 })
 
 app.get('/api/orders', (request, response) => {
@@ -1862,7 +1863,7 @@ if (botToken) {
         },
       })
 
-      console.log('Telegram bot started')
+      console.log(`Telegram bot started (${botUsername})`)
     })
     .catch((error) => {
       console.error('Telegram bot failed to start', error)
