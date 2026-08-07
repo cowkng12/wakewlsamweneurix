@@ -742,14 +742,14 @@ try {
   await copyTemplate(templateRoot, values.targetDir)
 
   await replaceInTextFiles(values.targetDir, [
-    ['aivorakeys-miniapp', values.packageName],
-    ['AivoraKeys', values.projectName],
-    ['aivorakeys', values.storeKey],
+    ['aivorahub-miniapp', values.packageName],
+    ['AivoraHub', values.projectName],
+    ['aivorahub', values.storeKey],
     ['AIVORA', values.promoPrefix],
     ['https://t.me/metifrysell', values.sellerUrl],
     ['metifrysell', values.sellerUsername],
-    ['@AivoraKeys', values.telegramChannelUsername],
-    ['https://t.me/AivoraKeys', values.telegramChannelUrl],
+    ['@AivoraaHub', values.telegramChannelUsername],
+    ['https://t.me/AivoraaHub', values.telegramChannelUrl],
     ['#2563eb', values.colors.primary],
     ['#2563EB', values.colors.primary.toUpperCase()],
     ['#38bdf8', values.colors.bright],

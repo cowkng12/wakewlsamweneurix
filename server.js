@@ -10,14 +10,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 const port = Number(process.env.PORT || 3001)
 const botToken = process.env.TELEGRAM_BOT_TOKEN?.trim()
-const botUsername = process.env.TELEGRAM_BOT_USERNAME?.trim() || '@AivoraKeys_bot'
+const botUsername = process.env.TELEGRAM_BOT_USERNAME?.trim() || '@AivoraHub_bot'
 const adminChatId = process.env.ADMIN_CHAT_ID?.trim()
 const webAppUrl = process.env.WEB_APP_URL?.trim() || 'http://localhost:5173'
 const sellerUrl = process.env.SELLER_URL?.trim() || 'https://t.me/metifrysell'
-const requiredChannelUsername = process.env.REQUIRED_CHANNEL_USERNAME?.trim() || '@AivoraKeys'
+const requiredChannelUsername = process.env.REQUIRED_CHANNEL_USERNAME?.trim() || '@AivoraaHub'
 const requiredChannelId = process.env.REQUIRED_CHANNEL_ID?.trim()
-const requiredChannelChat = requiredChannelId || requiredChannelUsername
-const requiredChannelUrl = process.env.REQUIRED_CHANNEL_URL?.trim() || 'https://t.me/AivoraKeys'
+const requiredChannelChat = requiredChannelUsername || requiredChannelId
+const requiredChannelUrl = process.env.REQUIRED_CHANNEL_URL?.trim() || 'https://t.me/AivoraaHub'
 const cryptoPayToken = process.env.CRYPTO_PAY_TOKEN?.trim()
 const cryptoPayApiUrl = process.env.CRYPTO_PAY_API_URL?.trim() || 'https://pay.crypt.bot/api'
 const cryptoPayAsset = process.env.CRYPTO_PAY_ASSET?.trim() || 'USDT'
@@ -40,7 +40,7 @@ const walletPayOptions = [
 const storeFilePath = process.env.STORE_FILE_PATH?.trim() || path.join(__dirname, 'data', 'store.json')
 const supabaseUrl = process.env.SUPABASE_URL?.trim()
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
-const supabaseStoreKey = process.env.SUPABASE_STORE_KEY?.trim() || 'aivorakeys'
+const supabaseStoreKey = process.env.SUPABASE_STORE_KEY?.trim() || 'aivorahub'
 const accountDeliveryThreshold = Number(process.env.ACCOUNT_DELIVERY_THRESHOLD || 1)
 const activationSiteUrl = process.env.ACTIVATION_SITE_URL?.trim() || `${webAppUrl.replace(/\/$/, '')}/activate`
 const keepAliveUrl = process.env.KEEP_ALIVE_URL?.trim() || webAppUrl
@@ -675,7 +675,7 @@ app.get('/api/config', (request, response) => {
 })
 
 app.get('/health', (request, response) => {
-  response.json({ ok: true, service: 'aivorakeys-miniapp', bot: botUsername })
+  response.json({ ok: true, service: 'aivorahub-miniapp', bot: botUsername })
 })
 
 app.get('/api/orders', (request, response) => {
@@ -758,7 +758,7 @@ app.post('/api/topups', async (request, response) => {
     const invoice = await createCryptoInvoice({
       id: topup.id,
       amount: topup.payableAmount,
-      description: `AivoraKeys balance top-up: $${topup.amount}`,
+      description: `AivoraHub balance top-up: $${topup.amount}`,
     })
 
     if (invoice) {
@@ -941,7 +941,7 @@ app.post('/api/topups/:topupId/crypto', async (request, response) => {
     const invoice = await createCryptoInvoice({
       id: topup.id,
       amount: topup.payableAmount || topup.amount,
-      description: `AivoraKeys balance top-up: $${topup.amount}`,
+      description: `AivoraHub balance top-up: $${topup.amount}`,
     })
 
     topup.status = 'payment_pending'
@@ -1263,7 +1263,7 @@ if (botToken) {
     ru: {
       languageSelected: 'Язык выбран: Русский.',
       welcome: (name) => [
-        `Добро пожаловать, ${name}. Это AivoraKeys 🚀`,
+        `Добро пожаловать, ${name}. Это AivoraHub 🚀`,
         '',
         'Здесь можно купить подписки и готовые AI-товары для работы, кода, учебы, видео, голоса и ресерча.',
         '',
@@ -1291,16 +1291,16 @@ if (botToken) {
       promotions: [
         '⭐ Акции',
         '',
-        'В честь открытия AivoraKeys Store 2 аккаунта Pro стоят $18 вместо двух по $20.',
+        'В честь открытия AivoraHub Store 2 аккаунта Pro стоят $18 вместо двух по $20.',
         '',
         'Kimi уже добавлен в каталог: Kimi K2, Kimi Pro и Kimi API Pack.',
       ].join('\n'),
       support: '💬 Поддержка\n\nНапишите ваш вопрос или проблему следующим сообщением. Мы передадим обращение оператору.',
       supportReceived: 'Спасибо. Ваше обращение отправлено в поддержку.',
-      about: '🔷 О проекте\n\nAivoraKeys Store помогает быстро покупать подписки на популярные AI-сервисы.',
+      about: '🔷 О проекте\n\nAivoraHub Store помогает быстро покупать подписки на популярные AI-сервисы.',
       balance: (amount) => `💳 Баланс\n\nВаш текущий баланс: $${amount}`,
       subscribeRequired: [
-        'Подпишитесь на канал AivoraKeys, чтобы открыть каталог.',
+        'Подпишитесь на канал AivoraHub, чтобы открыть каталог.',
         '',
         'Если вы уже подписаны, нажмите кнопку проверки ниже.',
       ].join('\n'),
@@ -1314,13 +1314,13 @@ if (botToken) {
       balanceButton: '💳 Баланс',
       promotionsButton: '⭐ Акции',
       supportButton: '💬 Поддержка',
-      aboutButton: '🔷 AivoraKeys',
+      aboutButton: '🔷 AivoraHub',
       languageButton: '🌐 Сменить язык',
     },
     en: {
       languageSelected: 'Language selected: English.',
       welcome: (name) => [
-        `Welcome, ${name}. This is AivoraKeys 🚀`,
+        `Welcome, ${name}. This is AivoraHub 🚀`,
         '',
         'Here you can buy AI subscriptions and ready AI products for work, coding, study, video, voice and research.',
         '',
@@ -1354,10 +1354,10 @@ if (botToken) {
       ].join('\n'),
       support: '💬 Support\n\nSend your question or problem in the next message. We will forward it to an operator.',
       supportReceived: 'Thank you. Your request has been sent to support.',
-      about: '🔷 About\n\nAivoraKeys Store helps you buy subscriptions for popular AI services quickly.',
+      about: '🔷 About\n\nAivoraHub Store helps you buy subscriptions for popular AI services quickly.',
       balance: (amount) => `💳 Balance\n\nYour current balance: $${amount}`,
       subscribeRequired: [
-        'Subscribe to the AivoraKeys channel to open the catalog.',
+        'Subscribe to the AivoraHub channel to open the catalog.',
         '',
         'If you are already subscribed, press the check button below.',
       ].join('\n'),
@@ -1371,13 +1371,13 @@ if (botToken) {
       balanceButton: '💳 Balance',
       promotionsButton: '⭐ Deals',
       supportButton: '💬 Support',
-      aboutButton: '🔷 AivoraKeys',
+      aboutButton: '🔷 AivoraHub',
       languageButton: '🌐 Change language',
     },
     zh: {
       languageSelected: '已选择语言：中文。',
       welcome: (name) => [
-        `欢迎，${name}。这里是 AivoraKeys 🚀`,
+        `欢迎，${name}。这里是 AivoraHub 🚀`,
         '',
         '这里可以购买适合工作、编程、学习、视频、语音和研究的 AI 订阅和现成 AI 商品。',
         '',
@@ -1411,10 +1411,10 @@ if (botToken) {
       ].join('\n'),
       support: '💬 支持\n\n请在下一条消息中发送你的问题。我们会转交给客服。',
       supportReceived: '谢谢。你的请求已发送给支持团队。',
-      about: '🔷 关于项目\n\nAivoraKeys Store 帮助你快速购买热门 AI 服务订阅。',
+      about: '🔷 关于项目\n\nAivoraHub Store 帮助你快速购买热门 AI 服务订阅。',
       balance: (amount) => `💳 余额\n\n当前余额：$${amount}`,
       subscribeRequired: [
-        '请先订阅 AivoraKeys 频道，然后打开目录。',
+        '请先订阅 AivoraHub 频道，然后打开目录。',
         '',
         '如果你已经订阅，请点击下面的检查按钮。',
       ].join('\n'),
@@ -1428,7 +1428,7 @@ if (botToken) {
       balanceButton: '💳 余额',
       promotionsButton: '⭐ 优惠',
       supportButton: '💬 支持',
-      aboutButton: '🔷 AivoraKeys',
+      aboutButton: '🔷 AivoraHub',
       languageButton: '🌐 切换语言',
     },
   }
@@ -1492,7 +1492,7 @@ if (botToken) {
   function promoBroadcastMessage(language) {
     const messages = {
       ru: [
-        '⭐ AivoraKeys уже 200 подписчиков',
+        '⭐ AivoraHub уже 200 подписчиков',
         '',
         'Актуальный промокод: SUB200',
         'Он дает скидку 25% на оплату пополнения баланса.',
@@ -1502,7 +1502,7 @@ if (botToken) {
         'Также в каталоге появились Kimi K2, Kimi Pro и Kimi API Pack.',
       ],
       en: [
-        '⭐ AivoraKeys reached 200 subscribers',
+        '⭐ AivoraHub reached 200 subscribers',
         '',
         'Current promo code: SUB200',
         'It gives 25% off your balance top-up payment.',
@@ -1512,7 +1512,7 @@ if (botToken) {
         'Kimi K2, Kimi Pro and Kimi API Pack are now in the catalog.',
       ],
       zh: [
-        '⭐ AivoraKeys 已达到 200 位订阅者',
+        '⭐ AivoraHub 已达到 200 位订阅者',
         '',
         '当前优惠码：SUB200',
         '充值余额付款享 25% 折扣。',
@@ -1634,7 +1634,7 @@ if (botToken) {
     }
 
     await context.reply([
-      'Админ-команды AivoraKeys Store:',
+      'Админ-команды AivoraHub Store:',
       '',
       '/broadcastpromos - разослать промокоды всем пользователям бота',
       '/refstats - статистика, кто сколько людей пригласил',
@@ -1766,7 +1766,7 @@ if (botToken) {
       await bot.telegram.sendMessage(
         adminChatId,
         [
-          'Новое обращение в поддержку AivoraKeys Store',
+          'Новое обращение в поддержку AivoraHub Store',
           `Пользователь: ${from.username ? `@${from.username}` : `${from.first_name || ''} ${from.last_name || ''}`.trim() || from.id}`,
           `ID: ${from.id}`,
           '',

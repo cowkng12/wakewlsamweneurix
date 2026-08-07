@@ -1,25 +1,25 @@
 {
-  "projectName": "AivoraKeys",
+  "projectName": "AivoraHub",
   "envFile": "my-bot.env",
-  "folderName": "AivoraKeys-New",
-  "packageName": "aivorakeys-miniapp",
-  "storeKey": "aivorakeys",
+  "folderName": "AivoraHub-New",
+  "packageName": "aivorahub-miniapp",
+  "storeKey": "aivorahub",
   "promoPrefix": "AIVORA",
   "sellerUrl": "https://t.me/metifrysell",
   "telegram": {
-    "channelUsername": "@AivoraKeys",
-    "channelUrl": "https://t.me/AivoraKeys"
+    "channelUsername": "@AivoraaHub",
+    "channelUrl": "https://t.me/AivoraaHub"
   },
   "github": {
     "owner": "cowkng12",
-    "repo": "new-aivorakeys-miniapp",
+    "repo": "new-aivorahub-miniapp",
     "createRepo": false,
     "push": false,
     "visibility": "public"
   },
   "render": {
-    "serviceName": "new-aivorakeys-miniapp",
-    "webAppUrl": "https://new-aivorakeys-miniapp.onrender.com",
+    "serviceName": "new-aivorahub-miniapp",
+    "webAppUrl": "https://new-aivorahub-miniapp.onrender.com",
     "region": "virginia",
     "plan": "free",
     "api": {
@@ -45,6 +45,6 @@
   },
   "git": {
     "init": true,
-    "commitMessage": "Prepare AivoraKeys mini app"
+    "commitMessage": "Prepare AivoraHub mini app"
   }
 }

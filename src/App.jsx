@@ -309,8 +309,8 @@ const promoBonuses = {
 const translations = {
   ru: {
     languageLabel: 'RU',
-    eyebrow: 'AivoraKeys',
-    title: 'AivoraKeys: подписки на нейросервисы',
+    eyebrow: 'AivoraHub',
+    title: 'AivoraHub: подписки на нейросервисы',
     hero: 'Выберите товар и подайте заявку на покупку.',
     selectPlan: 'Выбрать тариф',
     guarantee: 'Полная гарантия и возможность замены товара при возникновении проблем.',
@@ -417,8 +417,8 @@ const translations = {
   },
   en: {
     languageLabel: 'EN',
-    eyebrow: 'AivoraKeys',
-    title: 'AivoraKeys: AI service subscriptions',
+    eyebrow: 'AivoraHub',
+    title: 'AivoraHub: AI service subscriptions',
     hero: 'Choose a product and submit a purchase request.',
     selectPlan: 'Select plan',
     guarantee: 'Full guarantee and replacement if any issues arise.',
@@ -525,8 +525,8 @@ const translations = {
   },
   zh: {
     languageLabel: '中文',
-    eyebrow: 'AivoraKeys',
-    title: 'AivoraKeys：AI 服务订阅',
+    eyebrow: 'AivoraHub',
+    title: 'AivoraHub：AI 服务订阅',
     hero: '选择商品并提交购买申请。',
     selectPlan: '选择套餐',
     guarantee: '提供完整保障，如遇问题可更换商品。',
@@ -804,7 +804,7 @@ function BrandLogo() {
         <path d="M11 17 7.5 20.5" />
         <circle cx="17.6" cy="9.8" r="1.7" />
       </svg>
-      <span>AivoraKeys</span>
+      <span>AivoraHub</span>
     </div>
   )
 }
@@ -1463,7 +1463,7 @@ function StoreApp() {
         </>
       ) : (
         <section className="empty-panel">
-          <p className="eyebrow">AivoraKeys</p>
+          <p className="eyebrow">AivoraHub</p>
           <h2>{text.ordersTitle}</h2>
           {orders.length ? (
             <div className="orders-list">
@@ -1561,7 +1561,7 @@ function StoreApp() {
 
 function App() {
   useEffect(() => {
-    document.title = 'AivoraKeys'
+    document.title = 'AivoraHub'
   }, [])
 
   if (window.location.pathname === '/activate') {
