@@ -14,7 +14,8 @@ const botUsername = process.env.TELEGRAM_BOT_USERNAME?.trim() || '@AivoraHub_bot
 const adminChatId = process.env.ADMIN_CHAT_ID?.trim()
 const webAppUrl = process.env.WEB_APP_URL?.trim() || 'http://localhost:5173'
 const sellerUrl = process.env.SELLER_URL?.trim() || 'https://t.me/metifrysell'
-const supportBotUrl = process.env.SUPPORT_BOT_URL?.trim()
+const supportBotUsername = process.env.SUPPORT_BOT_USERNAME?.trim() || '@AivoraHubSupport_bot'
+const supportBotUrl = process.env.SUPPORT_BOT_URL?.trim() || 'https://t.me/AivoraHubSupport_bot'
 const requiredChannelUsername = process.env.REQUIRED_CHANNEL_USERNAME?.trim() || '@AivoraaHub'
 const requiredChannelId = process.env.REQUIRED_CHANNEL_ID?.trim()
 const requiredChannelChat = requiredChannelUsername || requiredChannelId
@@ -1488,7 +1489,9 @@ if (botToken) {
       await safeAnswerCbQuery(context, 'Вы в чате с поддержкой')
     }
 
-    await context.reply('Вы находитесь в чате с поддержкой\nЧтобы завершить чат напишите команду /stopchat')
+    activeSupportChats.delete(context.from.id)
+    pendingSupportUsers.delete(context.from.id)
+    await context.reply(`Если у вас возникли проблемы или вопросы, то откройте тикет в боте: ${supportBotUsername}`)
     return true
   }
 
@@ -1755,13 +1758,8 @@ if (botToken) {
     }
 
     await safeAnswerCbQuery(context)
-    if (!supportBotUrl) {
-      await context.reply('Для обращения в поддержку перейдите в support-бота. Ссылка пока не настроена администратором.')
-      return
-    }
-
     await context.reply(
-      'Для обращения в поддержку перейдите в support-бота и создайте тикет:',
+      `Если у вас возникли проблемы или вопросы, то откройте тикет в боте: ${supportBotUsername}`,
       Markup.inlineKeyboard([[Markup.button.url('Открыть support-бота', supportBotUrl)]]),
     )
   })
