@@ -585,6 +585,28 @@ async function isSubscribedToRequiredChannel(telegramId) {
   return ['creator', 'administrator', 'member'].includes(member.status)
 }
 
+async function requireSubscribedTelegramId(telegramId, response) {
+  const normalizedTelegramId = String(telegramId || '').trim()
+
+  if (!normalizedTelegramId) {
+    response.status(400).json({ error: 'Telegram user is required', channelUrl: requiredChannelUrl })
+    return false
+  }
+
+  try {
+    if (await isSubscribedToRequiredChannel(normalizedTelegramId)) {
+      return true
+    }
+  } catch (error) {
+    console.error('Telegram channel subscription check failed', error)
+    response.status(502).json({ error: 'Could not check channel subscription', channelUrl: requiredChannelUrl })
+    return false
+  }
+
+  response.status(403).json({ error: 'SUBSCRIPTION_REQUIRED', channelUrl: requiredChannelUrl })
+  return false
+}
+
 async function creditTopup(topup) {
   const telegramId = String(topup?.telegramUser?.id || '').trim()
 
@@ -680,8 +702,13 @@ app.get('/health', (request, response) => {
   response.json({ ok: true, service: 'aivorahub-miniapp', bot: botUsername })
 })
 
-app.get('/api/orders', (request, response) => {
+app.get('/api/orders', async (request, response) => {
   const telegramId = String(request.query.telegramId || '').trim()
+
+  if (!(await requireSubscribedTelegramId(telegramId, response))) {
+    return
+  }
+
   const userOrders = telegramId
     ? orders.filter((order) => String(order.telegramUser?.id || '').trim() === telegramId)
     : orders
@@ -689,8 +716,13 @@ app.get('/api/orders', (request, response) => {
   response.json({ orders: userOrders })
 })
 
-app.get('/api/balance/:telegramId', (request, response) => {
+app.get('/api/balance/:telegramId', async (request, response) => {
   const telegramId = request.params.telegramId?.trim()
+
+  if (!(await requireSubscribedTelegramId(telegramId, response))) {
+    return
+  }
+
   const balance = balances.get(telegramId) || 0
 
   response.json({ balance })
@@ -728,6 +760,10 @@ app.post('/api/topups', async (request, response) => {
 
   if (!telegramId) {
     response.status(400).json({ error: 'Open the app through Telegram to top up balance' })
+    return
+  }
+
+  if (!(await requireSubscribedTelegramId(telegramId, response))) {
     return
   }
 
@@ -819,6 +855,10 @@ app.post('/api/topups/wallet', async (request, response) => {
     return
   }
 
+  if (!(await requireSubscribedTelegramId(telegramId, response))) {
+    return
+  }
+
   if (!walletPayOption) {
     response.status(400).json({ error: 'Unsupported wallet payment network' })
     return
@@ -893,6 +933,10 @@ app.post('/api/topups/paypage', async (request, response) => {
     return
   }
 
+  if (!(await requireSubscribedTelegramId(telegramId, response))) {
+    return
+  }
+
   let promo
 
   try {
@@ -923,9 +967,14 @@ app.post('/api/topups/paypage', async (request, response) => {
 app.post('/api/topups/:topupId/crypto', async (request, response) => {
   const topupId = request.params.topupId?.trim()
   const topup = topups.find((item) => item.id === topupId)
+  const telegramId = String(topup?.telegramUser?.id || '').trim()
 
   if (!topup) {
     response.status(404).json({ error: 'Top-up not found' })
+    return
+  }
+
+  if (!(await requireSubscribedTelegramId(telegramId, response))) {
     return
   }
 
@@ -973,10 +1022,15 @@ app.post('/api/topups/:topupId/wallet', async (request, response) => {
   const topupId = request.params.topupId?.trim()
   const { networkId = 'ton' } = request.body ?? {}
   const topup = topups.find((item) => item.id === topupId)
+  const telegramId = String(topup?.telegramUser?.id || '').trim()
   const walletPayOption = walletPayOptions.find((option) => option.id === networkId)
 
   if (!topup) {
     response.status(404).json({ error: 'Top-up not found' })
+    return
+  }
+
+  if (!(await requireSubscribedTelegramId(telegramId, response))) {
     return
   }
 
@@ -1022,9 +1076,14 @@ app.post('/api/topups/:topupId/wallet', async (request, response) => {
 app.post('/api/topups/:topupId/paid', async (request, response) => {
   const topupId = request.params.topupId?.trim()
   const topup = topups.find((item) => item.id === topupId)
+  const telegramId = String(topup?.telegramUser?.id || '').trim()
 
   if (!topup) {
     response.status(404).json({ error: 'Top-up not found' })
+    return
+  }
+
+  if (!(await requireSubscribedTelegramId(telegramId, response))) {
     return
   }
 
@@ -1087,6 +1146,10 @@ app.get('/api/topups/:topupId/status', async (request, response) => {
     return
   }
 
+  if (!(await requireSubscribedTelegramId(telegramId, response))) {
+    return
+  }
+
   try {
     if (topup.paymentMethod !== 'wallet') {
       await refreshTopupStatus(topup)
@@ -1100,12 +1163,17 @@ app.get('/api/topups/:topupId/status', async (request, response) => {
   response.json({ topup, balance: balances.get(telegramId) || 0 })
 })
 
-app.get('/api/topups/:topupId/payment', (request, response) => {
+app.get('/api/topups/:topupId/payment', async (request, response) => {
   const topupId = request.params.topupId?.trim()
   const topup = topups.find((item) => item.id === topupId)
+  const telegramId = String(topup?.telegramUser?.id || '').trim()
 
   if (!topup) {
     response.status(404).json({ error: 'Payment not found' })
+    return
+  }
+
+  if (!(await requireSubscribedTelegramId(telegramId, response))) {
     return
   }
 
@@ -1135,6 +1203,10 @@ app.post('/api/orders/balance', async (request, response) => {
 
   if (!telegramId) {
     response.status(400).json({ error: 'Telegram user is required' })
+    return
+  }
+
+  if (!(await requireSubscribedTelegramId(telegramId, response))) {
     return
   }
 
@@ -1623,6 +1695,25 @@ if (botToken) {
     return false
   }
 
+  async function ensureSubscribedForBotAction(context, language = currentLanguage(context)) {
+    const telegramId = String(context.from?.id || '').trim()
+
+    try {
+      if (await isSubscribedToRequiredChannel(telegramId)) {
+        return true
+      }
+    } catch (error) {
+      console.error('Telegram channel subscription check failed', error)
+    }
+
+    if (context.callbackQuery) {
+      await safeAnswerCbQuery(context, botText[language].subscribeMissing)
+    }
+
+    await sendSubscriptionGate(context, language)
+    return false
+  }
+
   bot.start(async (context) => {
     rememberBotUser(context)
 
@@ -1893,12 +1984,24 @@ if (botToken) {
       return
     }
 
+    const language = currentLanguage(context)
+
+    if (!(await ensureSubscribedForBotAction(context, language))) {
+      return
+    }
+
     await safeAnswerCbQuery(context)
-    await context.reply(botText[currentLanguage(context)].guide)
+    await context.reply(botText[language].guide)
   })
 
   bot.action('orders', async (context) => {
     if (await stopIfSupportChatActive(context)) {
+      return
+    }
+
+    const language = currentLanguage(context)
+
+    if (!(await ensureSubscribedForBotAction(context, language))) {
       return
     }
 
@@ -1907,11 +2010,17 @@ if (botToken) {
     const telegramId = String(context.from?.id || '').trim()
     const userOrders = orders.filter((order) => String(order.telegramUser?.id || '').trim() === telegramId)
 
-    await context.reply(botText[currentLanguage(context)].orders(userOrders))
+    await context.reply(botText[language].orders(userOrders))
   })
 
   bot.action('balance', async (context) => {
     if (await stopIfSupportChatActive(context)) {
+      return
+    }
+
+    const language = currentLanguage(context)
+
+    if (!(await ensureSubscribedForBotAction(context, language))) {
       return
     }
 
@@ -1920,7 +2029,7 @@ if (botToken) {
     const telegramId = String(context.from?.id || '').trim()
     const balance = balances.get(telegramId) || 0
 
-    await context.reply(botText[currentLanguage(context)].balance(balance))
+    await context.reply(botText[language].balance(balance))
   })
 
   bot.action('promotions', async (context) => {
@@ -1928,8 +2037,14 @@ if (botToken) {
       return
     }
 
+    const language = currentLanguage(context)
+
+    if (!(await ensureSubscribedForBotAction(context, language))) {
+      return
+    }
+
     await safeAnswerCbQuery(context)
-    await context.reply(botText[currentLanguage(context)].promotions)
+    await context.reply(botText[language].promotions)
   })
 
   bot.action('about', async (context) => {
@@ -1937,8 +2052,14 @@ if (botToken) {
       return
     }
 
+    const language = currentLanguage(context)
+
+    if (!(await ensureSubscribedForBotAction(context, language))) {
+      return
+    }
+
     await safeAnswerCbQuery(context)
-    await context.reply(botText[currentLanguage(context)].about)
+    await context.reply(botText[language].about)
   })
 
   bot.action('language', async (context) => {
