@@ -1301,6 +1301,7 @@ if (botToken) {
         'Kimi уже добавлен в каталог: Kimi K2, Kimi Pro и Kimi API Pack.',
       ].join('\n'),
       support: '💬 Поддержка\n\nНапишите ваш вопрос или проблему следующим сообщением. Мы передадим обращение оператору.',
+      supportRedirect: (username) => `Если у вас возникли проблемы или вопросы, то откройте тикет в боте: ${username}`,
       supportReceived: 'Спасибо. Ваше обращение отправлено в поддержку.',
       about: '🔷 О проекте\n\nAivoraHub Store помогает быстро покупать подписки на популярные AI-сервисы.',
       balance: (amount) => `💳 Баланс\n\nВаш текущий баланс: $${amount}`,
@@ -1358,6 +1359,7 @@ if (botToken) {
         'Kimi is now in the catalog: Kimi K2, Kimi Pro and Kimi API Pack.',
       ].join('\n'),
       support: '💬 Support\n\nSend your question or problem in the next message. We will forward it to an operator.',
+      supportRedirect: (username) => `If you have any problems or questions, please open a ticket in the bot: ${username}`,
       supportReceived: 'Thank you. Your request has been sent to support.',
       about: '🔷 About\n\nAivoraHub Store helps you buy subscriptions for popular AI services quickly.',
       balance: (amount) => `💳 Balance\n\nYour current balance: $${amount}`,
@@ -1415,6 +1417,7 @@ if (botToken) {
         'Kimi 已加入目录：Kimi K2、Kimi Pro 和 Kimi API Pack。',
       ].join('\n'),
       support: '💬 支持\n\n请在下一条消息中发送你的问题。我们会转交给客服。',
+      supportRedirect: (username) => `如果您遇到问题或有任何疑问，请在此机器人中创建工单：${username}`,
       supportReceived: '谢谢。你的请求已发送给支持团队。',
       about: '🔷 关于项目\n\nAivoraHub Store 帮助你快速购买热门 AI 服务订阅。',
       balance: (amount) => `💳 余额\n\n当前余额：$${amount}`,
@@ -1491,7 +1494,7 @@ if (botToken) {
 
     activeSupportChats.delete(context.from.id)
     pendingSupportUsers.delete(context.from.id)
-    await context.reply(`Если у вас возникли проблемы или вопросы, то откройте тикет в боте: ${supportBotUsername}`)
+    await context.reply(botText[currentLanguage(context)].supportRedirect(supportBotUsername))
     return true
   }
 
@@ -1759,7 +1762,7 @@ if (botToken) {
 
     await safeAnswerCbQuery(context)
     await context.reply(
-      `Если у вас возникли проблемы или вопросы, то откройте тикет в боте: ${supportBotUsername}`,
+      botText[currentLanguage(context)].supportRedirect(supportBotUsername),
       Markup.inlineKeyboard([[Markup.button.url('Открыть support-бота', supportBotUrl)]]),
     )
   })
