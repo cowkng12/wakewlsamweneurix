@@ -26,15 +26,22 @@ const walletPayOptions = [
     id: 'ton',
     label: 'TON',
     network: 'TON',
-    asset: 'USDT TON / GRAM',
-    address: process.env.WALLET_PAY_TON_ADDRESS?.trim() || 'UQDpGKcwWkYJmRuamTSZhb7Q0gnqWiCzZ-LDlmihIGE34L3f',
+    asset: 'TON / GRAM',
+    address: process.env.WALLET_PAY_TON_ADDRESS?.trim() || 'UQC8r4dra0Gy1VlxktwRnsTRTcPoKNoqK4xQH94P3SuRRYWC',
   },
   {
     id: 'trc20',
-    label: 'TRC20',
+    label: 'USDT TRC20',
     network: 'TRC20',
     asset: 'USDT',
-    address: process.env.WALLET_PAY_TRC20_ADDRESS?.trim() || 'TJKWXgisQTVtyPXy6Ns8BfbBCnFSQKmoPt',
+    address: process.env.WALLET_PAY_TRC20_ADDRESS?.trim() || 'TJDqXkQx5nqFhq7RNtySUMCYTZ5Hk96o3G',
+  },
+  {
+    id: 'tether-ton',
+    label: 'Tether USD',
+    network: 'TON',
+    asset: 'USDT TON',
+    address: process.env.WALLET_PAY_TETHER_USD_ADDRESS?.trim() || 'UQC8r4dra0Gy1VlxktwRnsTRTcPoKNoqK4xQH94P3SuRRYWC',
   },
 ].filter((option) => option.address)
 const storeFilePath = process.env.STORE_FILE_PATH?.trim() || path.join(__dirname, 'data', 'store.json')
@@ -1199,6 +1206,7 @@ if (botToken) {
   bot = new Telegraf(botToken)
   const userLanguages = new Map()
   const pendingSupportUsers = new Set()
+  const activeSupportChats = new Set()
   const pendingAdminReplies = new Map()
 
   async function safeAnswerCbQuery(context, text) {
@@ -1234,8 +1242,10 @@ if (botToken) {
   }
 
   function formatBotOrders(userOrders, { locale, title, emptyText, dateLabel, priceLabel, codeLabel }) {
+    const activationLine = `Сайт активации: ${activationSiteUrl}`
+
     if (!userOrders.length) {
-      return `${title}\n\n${emptyText}`
+      return `${title}\n\n${emptyText}\n\n${activationLine}`
     }
 
     const orderLines = userOrders.slice(0, 10).map((order, index) => {
@@ -1256,7 +1266,7 @@ if (botToken) {
       return lines.join('\n')
     })
 
-    return [title, '', ...orderLines].join('\n\n')
+    return [title, '', ...orderLines, activationLine].join('\n\n')
   }
 
   const botText = {
@@ -1731,6 +1741,7 @@ if (botToken) {
   bot.action('support', async (context) => {
     await safeAnswerCbQuery(context)
     pendingSupportUsers.add(context.from.id)
+    activeSupportChats.add(context.from.id)
     await context.reply(botText[currentLanguage(context)].support)
   })
 
@@ -1745,38 +1756,69 @@ if (botToken) {
     await context.reply(`Напишите ответ пользователю ${context.match[1]} следующим сообщением.`)
   })
 
-  bot.on('text', async (context, next) => {
-    const replyToUserId = pendingAdminReplies.get(context.from.id)
+  bot.command('stopchat', async (context) => {
+    const telegramId = context.from?.id
 
-    if (replyToUserId && String(context.from.id) === adminChatId && !context.message.text.startsWith('/')) {
-      pendingAdminReplies.delete(context.from.id)
-      await bot.telegram.sendMessage(replyToUserId, `Ответ поддержки:\n\n${context.message.text}`)
-      await context.reply('Ответ отправлен пользователю.')
+    if (!telegramId || !activeSupportChats.has(telegramId)) {
+      await context.reply('У вас нет активного диалога с поддержкой.')
       return
     }
 
-    if (context.message.text.startsWith('/') || !pendingSupportUsers.has(context.from.id)) {
-      return next()
-    }
+    activeSupportChats.delete(telegramId)
+    pendingSupportUsers.delete(telegramId)
 
-    pendingSupportUsers.delete(context.from.id)
+    await context.reply('Диалог с поддержкой завершен.')
 
     if (bot && adminChatId) {
       const from = context.from
       await bot.telegram.sendMessage(
         adminChatId,
         [
-          'Новое обращение в поддержку AivoraHub Store',
+          'Пользователь завершил диалог с поддержкой.',
+          `Пользователь: ${from.username ? `@${from.username}` : `${from.first_name || ''} ${from.last_name || ''}`.trim() || from.id}`,
+          `ID: ${from.id}`,
+        ].join('\n'),
+      )
+    }
+  })
+
+  bot.on('text', async (context, next) => {
+    const replyToUserId = pendingAdminReplies.get(context.from.id)
+
+    if (replyToUserId && String(context.from.id) === adminChatId && !context.message.text.startsWith('/')) {
+      pendingAdminReplies.delete(context.from.id)
+
+      if (!activeSupportChats.has(Number(replyToUserId))) {
+        await context.reply('Диалог уже завершен пользователем.')
+        return
+      }
+
+      await bot.telegram.sendMessage(replyToUserId, `Ответ поддержки:\n\n${context.message.text}`)
+      await context.reply('Ответ отправлен пользователю.')
+      return
+    }
+
+    if (context.message.text.startsWith('/') || !activeSupportChats.has(context.from.id)) {
+      return next()
+    }
+
+    if (bot && adminChatId) {
+      const from = context.from
+      await bot.telegram.sendMessage(
+        adminChatId,
+        [
+          'Вопрос от пользователя',
           `Пользователь: ${from.username ? `@${from.username}` : `${from.first_name || ''} ${from.last_name || ''}`.trim() || from.id}`,
           `ID: ${from.id}`,
           '',
           context.message.text,
         ].join('\n'),
-        Markup.inlineKeyboard([[Markup.button.callback('Ответить', `support_reply:${from.id}`)]]),
+        Markup.inlineKeyboard([[Markup.button.callback('Ответ поддержки', `support_reply:${from.id}`)]]),
       )
     }
 
-    await context.reply(botText[currentLanguage(context)].supportReceived)
+    pendingSupportUsers.delete(context.from.id)
+    await context.reply(`${botText[currentLanguage(context)].supportReceived}\n\nЕсли проблема решена, напишите команду /stopchat.`)
   })
 
   bot.action('guide', async (context) => {

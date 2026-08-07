@@ -313,6 +313,7 @@ const translations = {
     title: 'AivoraHub: подписки на нейросервисы',
     hero: 'Выберите товар и подайте заявку на покупку.',
     selectPlan: 'Выбрать тариф',
+    popularLabel: 'Чаще всего покупают',
     guarantee: 'Полная гарантия и возможность замены товара при возникновении проблем.',
     promos: {
       'claude-pro-duo': 'Промо-лот: 2 аккаунта Pro — $18',
@@ -330,6 +331,7 @@ const translations = {
     tabs: { catalog: 'Каталог', orders: 'Заказы' },
     ordersTitle: 'Мои покупки',
     ordersText: 'Пока вы не совершили ни одной покупки.',
+    activationSite: 'Сайт активации',
     balanceTitle: 'Баланс',
     balanceText: 'Пока что вы не пополняли баланс.',
     topUpTitle: 'Пополнить баланс',
@@ -421,6 +423,7 @@ const translations = {
     title: 'AivoraHub: AI service subscriptions',
     hero: 'Choose a product and submit a purchase request.',
     selectPlan: 'Select plan',
+    popularLabel: 'Most popular',
     guarantee: 'Full guarantee and replacement if any issues arise.',
     promos: {
       'claude-pro-duo': 'Promo lot: 2 Accounts Pro — $18',
@@ -438,6 +441,7 @@ const translations = {
     tabs: { catalog: 'Catalog', orders: 'Orders' },
     ordersTitle: 'My purchases',
     ordersText: 'You have not made any purchases yet.',
+    activationSite: 'Activation site',
     balanceTitle: 'Balance',
     balanceText: 'You have not topped up your balance yet.',
     topUpTitle: 'Top up balance',
@@ -529,6 +533,7 @@ const translations = {
     title: 'AivoraHub：AI 服务订阅',
     hero: '选择商品并提交购买申请。',
     selectPlan: '选择套餐',
+    popularLabel: '最常购买',
     guarantee: '提供完整保障，如遇问题可更换商品。',
     promos: {
       'claude-pro-duo': '优惠商品：2 个 Pro 账号 — $18',
@@ -546,6 +551,7 @@ const translations = {
     tabs: { catalog: '目录', orders: '订单' },
     ordersTitle: '我的购买',
     ordersText: '你还没有任何购买记录。',
+    activationSite: '激活网站',
     balanceTitle: '余额',
     balanceText: '你还没有充值余额。',
     topUpTitle: '充值余额',
@@ -1158,13 +1164,15 @@ function ProductCard({ product, onSelect, active, text }) {
   const [badge, description] = text.productText[product.id]
   const promo = text.promos?.[product.id]
   const avatar = productAvatars[product.group] || { src: '', fallback: product.brand.slice(0, 2).toUpperCase() }
+  const isPopular = product.id === 'chatgpt-plus-ready'
 
   return (
     <button
       type="button"
-      className={`product-card${active ? ' active' : ''}`}
+      className={`product-card${active ? ' active' : ''}${isPopular ? ' popular' : ''}`}
       onClick={() => onSelect(product)}
     >
+      {isPopular ? <span className="popular-ribbon">{text.popularLabel}</span> : null}
       <span className="product-icon" aria-hidden="true">
         {avatar.src ? <img src={avatar.src} alt="" loading="lazy" /> : null}
         <span>{avatar.fallback}</span>
@@ -1202,6 +1210,7 @@ function StoreApp() {
   const text = translations[language]
   const promoBonus = promoBonuses[promoCode.trim().toUpperCase()] || 0
   const topUpPayableAmount = Number((selectedTopUpAmount * (1 - promoBonus / 100)).toFixed(2))
+  const activationUrl = `${window.location.origin}/activate`
   const visibleProducts = activeGroup === 'Все'
     ? products
     : products.filter((product) => product.group === activeGroup)
@@ -1365,30 +1374,33 @@ function StoreApp() {
 
   return (
     <main className="page-shell">
-      <section className="hero-block">
+      <div className="hero-controls page-top-controls">
+        <button
+          type="button"
+          className="language-toggle store-language-toggle"
+          onClick={() => setLanguage((current) => languages[(languages.indexOf(current) + 1) % languages.length])}
+        >
+          {text.languageLabel}
+        </button>
+        <button
+          type="button"
+          className="balance-pill"
+          onClick={() => setIsTopUpPanelOpen(true)}
+        >
+          <span>{formatPrice(balance)}</span>
+          <strong>+</strong>
+        </button>
+      </div>
+
+      {activeTab === 'catalog' ? (
+        <section className="hero-block">
         <div>
           <p className="eyebrow">{text.eyebrow}</p>
           <h1>{text.title}</h1>
           <p className="hero-copy">{text.hero}</p>
         </div>
-        <div className="hero-controls">
-          <button
-            type="button"
-            className="language-toggle store-language-toggle"
-            onClick={() => setLanguage((current) => languages[(languages.indexOf(current) + 1) % languages.length])}
-          >
-            {text.languageLabel}
-          </button>
-          <button
-            type="button"
-            className="balance-pill"
-            onClick={() => setIsTopUpPanelOpen(true)}
-          >
-            <span>{formatPrice(balance)}</span>
-            <strong>+</strong>
-          </button>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
       {activeTab === 'catalog' ? (
         <>
@@ -1480,6 +1492,9 @@ function StoreApp() {
           ) : (
             <p>{text.ordersText}</p>
           )}
+          <a className="activation-site-link" href={activationUrl}>
+            {text.activationSite}: {activationUrl}
+          </a>
         </section>
       )}
 

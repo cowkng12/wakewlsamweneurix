@@ -32,6 +32,12 @@ services:
         value: https://pay.crypt.bot/api
       - key: CRYPTO_PAY_ASSET
         value: USDT
+      - key: WALLET_PAY_TON_ADDRESS
+        value: UQC8r4dra0Gy1VlxktwRnsTRTcPoKNoqK4xQH94P3SuRRYWC
+      - key: WALLET_PAY_TRC20_ADDRESS
+        value: TJDqXkQx5nqFhq7RNtySUMCYTZ5Hk96o3G
+      - key: WALLET_PAY_TETHER_USD_ADDRESS
+        value: UQC8r4dra0Gy1VlxktwRnsTRTcPoKNoqK4xQH94P3SuRRYWC
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
