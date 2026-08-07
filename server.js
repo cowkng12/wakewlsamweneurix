@@ -14,6 +14,7 @@ const botUsername = process.env.TELEGRAM_BOT_USERNAME?.trim() || '@AivoraHub_bot
 const adminChatId = process.env.ADMIN_CHAT_ID?.trim()
 const webAppUrl = process.env.WEB_APP_URL?.trim() || 'http://localhost:5173'
 const sellerUrl = process.env.SELLER_URL?.trim() || 'https://t.me/metifrysell'
+const supportBotUrl = process.env.SUPPORT_BOT_URL?.trim()
 const requiredChannelUsername = process.env.REQUIRED_CHANNEL_USERNAME?.trim() || '@AivoraaHub'
 const requiredChannelId = process.env.REQUIRED_CHANNEL_ID?.trim()
 const requiredChannelChat = requiredChannelUsername || requiredChannelId
@@ -1754,9 +1755,15 @@ if (botToken) {
     }
 
     await safeAnswerCbQuery(context)
-    pendingSupportUsers.add(context.from.id)
-    activeSupportChats.add(context.from.id)
-    await context.reply(botText[currentLanguage(context)].support)
+    if (!supportBotUrl) {
+      await context.reply('Для обращения в поддержку перейдите в support-бота. Ссылка пока не настроена администратором.')
+      return
+    }
+
+    await context.reply(
+      'Для обращения в поддержку перейдите в support-бота и создайте тикет:',
+      Markup.inlineKeyboard([[Markup.button.url('Открыть support-бота', supportBotUrl)]]),
+    )
   })
 
   bot.action(/support_reply:(\d+)/, async (context) => {

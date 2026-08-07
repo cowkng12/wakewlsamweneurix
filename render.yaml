@@ -22,6 +22,8 @@ services:
         sync: false
       - key: SELLER_URL
         sync: false
+      - key: SUPPORT_BOT_URL
+        sync: false
       - key: REQUIRED_CHANNEL_USERNAME
         value: "@AivoraaHub"
       - key: REQUIRED_CHANNEL_URL

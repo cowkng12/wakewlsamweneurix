@@ -54,6 +54,7 @@ TELEGRAM_BOT_USERNAME=@AivoraHub_bot
 ADMIN_CHAT_ID=ваш_telegram_id
 WEB_APP_URL=https://ваш-render-url
 SELLER_URL=https://t.me/metifrysell
+SUPPORT_BOT_URL=https://t.me/your_support_bot
 REQUIRED_CHANNEL_USERNAME=@AivoraaHub
 REQUIRED_CHANNEL_URL=https://t.me/AivoraaHub
 CRYPTO_PAY_TOKEN=токен_CryptoBot
