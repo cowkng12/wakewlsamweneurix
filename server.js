@@ -36,13 +36,6 @@ const walletPayOptions = [
     asset: 'USDT',
     address: process.env.WALLET_PAY_TRC20_ADDRESS?.trim() || 'TJDqXkQx5nqFhq7RNtySUMCYTZ5Hk96o3G',
   },
-  {
-    id: 'tether-ton',
-    label: 'Tether USD',
-    network: 'TON',
-    asset: 'USDT TON',
-    address: process.env.WALLET_PAY_TETHER_USD_ADDRESS?.trim() || 'UQC8r4dra0Gy1VlxktwRnsTRTcPoKNoqK4xQH94P3SuRRYWC',
-  },
 ].filter((option) => option.address)
 const storeFilePath = process.env.STORE_FILE_PATH?.trim() || path.join(__dirname, 'data', 'store.json')
 const supabaseUrl = process.env.SUPABASE_URL?.trim()
@@ -1801,6 +1794,51 @@ if (botToken) {
         ].join('\n'),
       )
     }
+  })
+
+  bot.on(['photo', 'voice', 'video'], async (context, next) => {
+    const replyToUserId = pendingAdminReplies.get(context.from.id)
+
+    if (replyToUserId && String(context.from.id) === adminChatId) {
+      pendingAdminReplies.delete(context.from.id)
+
+      if (!activeSupportChats.has(Number(replyToUserId))) {
+        await context.reply('Диалог уже завершен пользователем.')
+        return
+      }
+
+      await bot.telegram.sendMessage(replyToUserId, 'Ответ поддержки:')
+      await bot.telegram.copyMessage(replyToUserId, context.chat.id, context.message.message_id)
+      await bot.telegram.sendMessage(replyToUserId, 'Если остались вопросы, продолжайте писать. Если проблема решена, напишите команду /stopchat.')
+      await context.reply('Ответ отправлен пользователю.')
+      return
+    }
+
+    if (!activeSupportChats.has(context.from.id)) {
+      return next()
+    }
+
+    if (bot && adminChatId) {
+      const from = context.from
+
+      await bot.telegram.sendMessage(
+        adminChatId,
+        [
+          'Вопрос от пользователя',
+          `Пользователь: ${from.username ? `@${from.username}` : `${from.first_name || ''} ${from.last_name || ''}`.trim() || from.id}`,
+          `ID: ${from.id}`,
+        ].join('\n'),
+      )
+      await bot.telegram.copyMessage(adminChatId, context.chat.id, context.message.message_id)
+      await bot.telegram.sendMessage(
+        adminChatId,
+        'Ответить пользователю:',
+        Markup.inlineKeyboard([[Markup.button.callback('Ответ поддержки', `support_reply:${from.id}`)]]),
+      )
+    }
+
+    pendingSupportUsers.delete(context.from.id)
+    await context.reply(`${botText[currentLanguage(context)].supportReceived}\n\nЕсли проблема решена, напишите команду /stopchat.`)
   })
 
   bot.on('text', async (context, next) => {
