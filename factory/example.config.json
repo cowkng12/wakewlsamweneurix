@@ -1,25 +1,25 @@
 {
-  "projectName": "NervaHub",
+  "projectName": "AivoraKeys",
   "envFile": "my-bot.env",
-  "folderName": "NervaHub-New",
-  "packageName": "nervahub-miniapp",
-  "storeKey": "nervahub",
-  "promoPrefix": "NERVA",
+  "folderName": "AivoraKeys-New",
+  "packageName": "aivorakeys-miniapp",
+  "storeKey": "aivorakeys",
+  "promoPrefix": "AIVORA",
   "sellerUrl": "https://t.me/metifrysell",
   "telegram": {
-    "channelUsername": "@NervaHub",
-    "channelUrl": "https://t.me/NervaHub"
+    "channelUsername": "@AivoraKeys",
+    "channelUrl": "https://t.me/AivoraKeys"
   },
   "github": {
     "owner": "cowkng12",
-    "repo": "new-nervahub-miniapp",
+    "repo": "new-aivorakeys-miniapp",
     "createRepo": false,
     "push": false,
     "visibility": "public"
   },
   "render": {
-    "serviceName": "new-nervahub-miniapp",
-    "webAppUrl": "https://new-nervahub-miniapp.onrender.com",
+    "serviceName": "new-aivorakeys-miniapp",
+    "webAppUrl": "https://new-aivorakeys-miniapp.onrender.com",
     "region": "virginia",
     "plan": "free",
     "api": {
@@ -45,6 +45,6 @@
   },
   "git": {
     "init": true,
-    "commitMessage": "Prepare NervaHub mini app"
+    "commitMessage": "Prepare AivoraKeys mini app"
   }
 }

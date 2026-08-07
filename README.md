@@ -1,6 +1,6 @@
-# NervaHub Mini App
+# AivoraKeys Mini App
 
-Telegram bot: `@NervaHub_bot`.
+Telegram bot: `@AivoraKeys_bot`.
 
 Telegram Mini App для витрины AI-подписок, пополнения баланса, оплат и выдачи ключей активации.
 
@@ -50,16 +50,19 @@ Health Check Path: /health
 
 ```text
 TELEGRAM_BOT_TOKEN=токен_от_BotFather
-TELEGRAM_BOT_USERNAME=@NervaHub_bot
+TELEGRAM_BOT_USERNAME=@AivoraKeys_bot
 ADMIN_CHAT_ID=ваш_telegram_id
 WEB_APP_URL=https://ваш-render-url
 SELLER_URL=https://t.me/metifrysell
-REQUIRED_CHANNEL_USERNAME=@NervaHub
-REQUIRED_CHANNEL_URL=https://t.me/NervaHub
+REQUIRED_CHANNEL_ID=-100private_channel_id
+REQUIRED_CHANNEL_USERNAME=@AivoraKeys
+REQUIRED_CHANNEL_URL=https://t.me/+private_channel_invite
 CRYPTO_PAY_TOKEN=токен_CryptoBot
 ACCOUNT_DELIVERY_THRESHOLD=0.1
 ACTIVATION_SITE_URL=https://ваш-render-url/activate
 ```
+
+Для приватного Telegram-канала `REQUIRED_CHANNEL_URL` должен быть invite-link, а `REQUIRED_CHANNEL_ID` должен быть numeric id канала, начинающийся с `-100`. `REQUIRED_CHANNEL_USERNAME` используется только если канал публичный.
 
 `VITE_API_BASE_URL` на Render можно не задавать: frontend использует тот же домен, с которого отдается сайт. Для локальной разработки в `.env.example` оставлен `http://localhost:3001`.
 
@@ -76,7 +79,7 @@ create table if not exists app_store (
 );
 ```
 
-После создания таблицы добавьте `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` и `SUPABASE_STORE_KEY=nervahub` в Render.
+После создания таблицы добавьте `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` и `SUPABASE_STORE_KEY=aivorakeys` в Render.
 
 <!-- FACTORY_DOCS_START -->
 ## Генератор Новых Ботов

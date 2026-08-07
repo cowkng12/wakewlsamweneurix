@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: nervahub-miniapp
+    name: aivorakeys-miniapp
     env: node
     plan: free
     buildCommand: npm install && npm run build
@@ -17,15 +17,17 @@ services:
       - key: TELEGRAM_BOT_TOKEN
         sync: false
       - key: TELEGRAM_BOT_USERNAME
-        value: "@NervaHub_bot"
+        value: "@AivoraKeys_bot"
       - key: ADMIN_CHAT_ID
         sync: false
       - key: SELLER_URL
         sync: false
+      - key: REQUIRED_CHANNEL_ID
+        sync: false
       - key: REQUIRED_CHANNEL_USERNAME
-        value: "@NervaHub"
+        value: "@AivoraKeys"
       - key: REQUIRED_CHANNEL_URL
-        value: https://t.me/NervaHub
+        sync: false
       - key: CRYPTO_PAY_TOKEN
         sync: false
       - key: CRYPTO_PAY_API_URL
@@ -37,6 +39,6 @@ services:
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: SUPABASE_STORE_KEY
-        value: nervahub
+        value: aivorakeys
       - key: ACCOUNT_DELIVERY_THRESHOLD
         value: "0.1"

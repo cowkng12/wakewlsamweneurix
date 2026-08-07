@@ -742,14 +742,14 @@ try {
   await copyTemplate(templateRoot, values.targetDir)
 
   await replaceInTextFiles(values.targetDir, [
-    ['nervahub-miniapp', values.packageName],
-    ['NervaHub', values.projectName],
-    ['nervahub', values.storeKey],
-    ['NERVA', values.promoPrefix],
+    ['aivorakeys-miniapp', values.packageName],
+    ['AivoraKeys', values.projectName],
+    ['aivorakeys', values.storeKey],
+    ['AIVORA', values.promoPrefix],
     ['https://t.me/metifrysell', values.sellerUrl],
     ['metifrysell', values.sellerUsername],
-    ['@NervaHub', values.telegramChannelUsername],
-    ['https://t.me/NervaHub', values.telegramChannelUrl],
+    ['@AivoraKeys', values.telegramChannelUsername],
+    ['https://t.me/AivoraKeys', values.telegramChannelUrl],
     ['#2563eb', values.colors.primary],
     ['#2563EB', values.colors.primary.toUpperCase()],
     ['#38bdf8', values.colors.bright],
