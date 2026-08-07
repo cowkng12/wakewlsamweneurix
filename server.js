@@ -1485,6 +1485,19 @@ if (botToken) {
     return userLanguages.get(context.from?.id) || 'ru'
   }
 
+  async function stopIfSupportChatActive(context) {
+    if (!activeSupportChats.has(context.from?.id)) {
+      return false
+    }
+
+    if (context.callbackQuery) {
+      await safeAnswerCbQuery(context, 'Вы в чате с поддержкой')
+    }
+
+    await context.reply('Вы находитесь в чате с поддержкой\nЧтобы завершить чат напишите команду /stopchat')
+    return true
+  }
+
   function rememberBotUser(context, language = currentLanguage(context)) {
     if (!context.from?.id) {
       return
@@ -1628,6 +1641,10 @@ if (botToken) {
   })
 
   bot.command('shop', async (context) => {
+    if (await stopIfSupportChatActive(context)) {
+      return
+    }
+
     rememberBotUser(context)
     await saveStore()
     await sendMainMenuIfSubscribed(context, currentLanguage(context))
@@ -1739,6 +1756,10 @@ if (botToken) {
   })
 
   bot.action('support', async (context) => {
+    if (await stopIfSupportChatActive(context)) {
+      return
+    }
+
     await safeAnswerCbQuery(context)
     pendingSupportUsers.add(context.from.id)
     activeSupportChats.add(context.from.id)
@@ -1793,7 +1814,7 @@ if (botToken) {
         return
       }
 
-      await bot.telegram.sendMessage(replyToUserId, `Ответ поддержки:\n\n${context.message.text}`)
+      await bot.telegram.sendMessage(replyToUserId, `Ответ поддержки:\n\n${context.message.text}\n\nЕсли остались вопросы, продолжайте писать. Если проблема решена, напишите команду /stopchat.`)
       await context.reply('Ответ отправлен пользователю.')
       return
     }
@@ -1822,11 +1843,19 @@ if (botToken) {
   })
 
   bot.action('guide', async (context) => {
+    if (await stopIfSupportChatActive(context)) {
+      return
+    }
+
     await safeAnswerCbQuery(context)
     await context.reply(botText[currentLanguage(context)].guide)
   })
 
   bot.action('orders', async (context) => {
+    if (await stopIfSupportChatActive(context)) {
+      return
+    }
+
     await safeAnswerCbQuery(context)
 
     const telegramId = String(context.from?.id || '').trim()
@@ -1836,6 +1865,10 @@ if (botToken) {
   })
 
   bot.action('balance', async (context) => {
+    if (await stopIfSupportChatActive(context)) {
+      return
+    }
+
     await safeAnswerCbQuery(context)
 
     const telegramId = String(context.from?.id || '').trim()
@@ -1845,21 +1878,37 @@ if (botToken) {
   })
 
   bot.action('promotions', async (context) => {
+    if (await stopIfSupportChatActive(context)) {
+      return
+    }
+
     await safeAnswerCbQuery(context)
     await context.reply(botText[currentLanguage(context)].promotions)
   })
 
   bot.action('about', async (context) => {
+    if (await stopIfSupportChatActive(context)) {
+      return
+    }
+
     await safeAnswerCbQuery(context)
     await context.reply(botText[currentLanguage(context)].about)
   })
 
   bot.action('language', async (context) => {
+    if (await stopIfSupportChatActive(context)) {
+      return
+    }
+
     await safeAnswerCbQuery(context)
     await context.reply('Выберите язык / Choose language / 选择语言', languageKeyboard)
   })
 
   bot.action('check_subscription', async (context) => {
+    if (await stopIfSupportChatActive(context)) {
+      return
+    }
+
     const language = currentLanguage(context)
 
     try {
@@ -1877,6 +1926,10 @@ if (botToken) {
   })
 
   bot.action(/set_lang_(ru|en|zh)/, async (context) => {
+    if (await stopIfSupportChatActive(context)) {
+      return
+    }
+
     const language = context.match[1]
 
     userLanguages.set(context.from.id, language)
@@ -1902,7 +1955,7 @@ if (botToken) {
       await bot.telegram.setChatMenuButton({
         menu_button: {
           type: 'web_app',
-          text: 'Open',
+          text: 'Menu',
           web_app: { url: webAppUrl },
         },
       })

@@ -331,7 +331,6 @@ const translations = {
     tabs: { catalog: 'Каталог', orders: 'Заказы' },
     ordersTitle: 'Мои покупки',
     ordersText: 'Пока вы не совершили ни одной покупки.',
-    activationSite: 'Сайт активации',
     balanceTitle: 'Баланс',
     balanceText: 'Пока что вы не пополняли баланс.',
     topUpTitle: 'Пополнить баланс',
@@ -441,7 +440,6 @@ const translations = {
     tabs: { catalog: 'Catalog', orders: 'Orders' },
     ordersTitle: 'My purchases',
     ordersText: 'You have not made any purchases yet.',
-    activationSite: 'Activation site',
     balanceTitle: 'Balance',
     balanceText: 'You have not topped up your balance yet.',
     topUpTitle: 'Top up balance',
@@ -551,7 +549,6 @@ const translations = {
     tabs: { catalog: '目录', orders: '订单' },
     ordersTitle: '我的购买',
     ordersText: '你还没有任何购买记录。',
-    activationSite: '激活网站',
     balanceTitle: '余额',
     balanceText: '你还没有充值余额。',
     topUpTitle: '充值余额',
@@ -1210,7 +1207,6 @@ function StoreApp() {
   const text = translations[language]
   const promoBonus = promoBonuses[promoCode.trim().toUpperCase()] || 0
   const topUpPayableAmount = Number((selectedTopUpAmount * (1 - promoBonus / 100)).toFixed(2))
-  const activationUrl = `${window.location.origin}/activate`
   const visibleProducts = activeGroup === 'Все'
     ? products
     : products.filter((product) => product.group === activeGroup)
@@ -1492,9 +1488,6 @@ function StoreApp() {
           ) : (
             <p>{text.ordersText}</p>
           )}
-          <a className="activation-site-link" href={activationUrl}>
-            {text.activationSite}: {activationUrl}
-          </a>
         </section>
       )}
 

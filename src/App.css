@@ -739,21 +739,6 @@ body.modal-open {
   color: var(--muted);
 }
 
-.activation-site-link {
-  display: block;
-  width: fit-content;
-  max-width: 100%;
-  margin-top: 20px;
-  color: var(--blue-deep);
-  font-weight: 800;
-  overflow-wrap: anywhere;
-  text-decoration: none;
-}
-
-.activation-site-link:hover {
-  color: var(--blue-bright);
-}
-
 .balance-amount {
   display: block;
   margin: 0 0 14px;
