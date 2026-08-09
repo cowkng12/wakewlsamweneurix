@@ -195,14 +195,28 @@
 .wallet-pay-card button,
 .product-balance-button,
 .topup-pay-button {
-  border: 0;
+  border: 1px solid rgba(255, 255, 255, 0.34);
   border-radius: 8px;
   padding: 15px 18px;
-  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-bright) 100%);
-  color: #f5f5f5;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(210, 210, 210, 0.72));
+  color: #050505;
   font-weight: 900;
   cursor: pointer;
-  box-shadow: 0 16px 34px rgba(10, 73, 190, 0.28);
+  box-shadow: 0 16px 34px rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+  transition: transform 0.18s ease, opacity 0.18s ease, background 0.18s ease;
+}
+
+.activation-form button:hover,
+.wallet-pay-card button:hover,
+.product-balance-button:hover,
+.topup-pay-button:hover,
+.product-action:hover,
+.group-tab:hover,
+.bottom-tabs button:hover,
+.topup-grid button:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
 }
 
 .wallet-pay-card button {
@@ -288,16 +302,16 @@
 }
 
 .wallet-pay-methods button {
-  border: 1px solid var(--line);
-  background: var(--panel);
-  color: var(--blue-deep);
-  box-shadow: none;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(210, 210, 210, 0.64));
+  color: #050505;
+  box-shadow: 0 12px 30px rgba(255, 255, 255, 0.08);
 }
 
 .wallet-pay-methods button:first-child {
-  border: 0;
-  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-bright) 100%);
-  color: #f5f5f5;
+  border: 1px solid rgba(255, 255, 255, 0.44);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(225, 225, 225, 0.72));
+  color: #050505;
 }
 
 .wallet-pay-qr {
@@ -320,9 +334,9 @@
 
 .wallet-pay-card .wallet-pay-back-button {
   margin-bottom: 10px;
-  border: 1px solid var(--line-strong);
-  background: var(--panel);
-  color: var(--blue-deep);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
   box-shadow: none;
 }
 
@@ -463,6 +477,7 @@ body.modal-open {
   border-radius: 12px;
   padding: 11px 12px;
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.32);
+  animation: activity-refresh 0.42s ease both;
 }
 
 .activity-card strong,
@@ -495,15 +510,29 @@ body.modal-open {
 }
 
 .activity-card.light {
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  background: linear-gradient(135deg, #ffffff, #d8d8d8);
+  border: 1px solid rgba(255, 255, 255, 0.46);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.78), rgba(218, 218, 218, 0.48));
   color: #050505;
+  backdrop-filter: blur(14px);
 }
 
 .activity-card.red {
-  border: 1px solid rgba(255, 81, 81, 0.68);
-  background: linear-gradient(135deg, #ff3434, #8c0d0d);
-  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.46);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.78), rgba(218, 218, 218, 0.48));
+  color: #050505;
+  backdrop-filter: blur(14px);
+}
+
+@keyframes activity-refresh {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .catalog-layout {
@@ -556,15 +585,16 @@ body.modal-open {
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 10px 14px;
-  background: rgba(10, 10, 10, 0.9);
-  color: var(--muted);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.72);
   cursor: pointer;
+  backdrop-filter: blur(12px);
 }
 
 .group-tab.active {
-  border-color: var(--line-strong);
-  background: #1f1f1f;
-  color: var(--blue-deep);
+  border-color: rgba(255, 255, 255, 0.66);
+  background: rgba(255, 255, 255, 0.88);
+  color: #050505;
   font-weight: 800;
 }
 
@@ -714,11 +744,13 @@ body.modal-open {
   justify-self: end;
   border-radius: 8px;
   padding: 10px 12px;
-  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-bright) 100%);
-  color: #f5f5f5;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(210, 210, 210, 0.68));
+  color: #050505;
   font-size: 14px;
   font-weight: 900;
   white-space: nowrap;
+  box-shadow: 0 12px 30px rgba(255, 255, 255, 0.08);
 }
 
 .product-payment-overlay {
@@ -776,15 +808,24 @@ body.modal-open {
   position: absolute;
   top: 10px;
   right: 12px;
-  width: 30px;
-  height: 30px;
-  border: 0;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 999px;
-  background: #1f1f1f;
-  color: var(--blue-deep);
-  font-size: 22px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 20px;
   line-height: 1;
   cursor: pointer;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+  transition: opacity 0.18s ease, transform 0.18s ease, background 0.18s ease;
+}
+
+.product-payment-close:hover {
+  transform: rotate(90deg) scale(1.04);
+  background: rgba(255, 255, 255, 0.16);
+  opacity: 0.86;
 }
 
 .product-balance-button,
@@ -856,12 +897,13 @@ body.modal-open {
 
 .topup-grid button,
 .bottom-tabs button {
-  border: 1px solid var(--line);
+  border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 8px;
-  background: var(--panel);
-  color: var(--muted);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.72);
   font-weight: 700;
   cursor: pointer;
+  backdrop-filter: blur(12px);
 }
 
 .topup-grid button {
@@ -869,9 +911,9 @@ body.modal-open {
 }
 
 .topup-grid button.active {
-  border-color: var(--line-strong);
-  background: #1f1f1f;
-  color: var(--blue-deep);
+  border-color: rgba(255, 255, 255, 0.66);
+  background: rgba(255, 255, 255, 0.9);
+  color: #050505;
 }
 
 .promo-code-field {
@@ -957,9 +999,9 @@ body.modal-open {
 }
 
 .bottom-tabs button.active {
-  border-color: transparent;
-  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-bright) 100%);
-  color: #f5f5f5;
+  border-color: rgba(255, 255, 255, 0.62);
+  background: rgba(255, 255, 255, 0.9);
+  color: #050505;
 }
 
 @media (max-width: 900px) {

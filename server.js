@@ -1579,6 +1579,14 @@ if (botToken) {
     ])
   }
 
+  function catalogReplyKeyboard(language, telegramId = '') {
+    const text = botText[language]
+
+    return Markup.keyboard([[Markup.button.webApp(text.shop, userWebAppUrl(telegramId))]])
+      .resize()
+      .oneTime(false)
+  }
+
   function subscriptionKeyboard(language) {
     const text = botText[language]
 
@@ -1711,6 +1719,7 @@ if (botToken) {
   async function sendMainMenu(context, language) {
     const name = context.from?.first_name || 'friend'
     await context.reply(botText[language].welcome(name), mainKeyboard(language, context.from?.id))
+    await context.reply(botText[language].shop, catalogReplyKeyboard(language, context.from?.id))
   }
 
   async function sendSubscriptionGate(context, language) {

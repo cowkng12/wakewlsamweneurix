@@ -1233,7 +1233,7 @@ function generateActivityItems() {
       name: activityNames[nameIndex],
       product,
       minutes,
-      tone: index === 0 ? 'light' : 'red',
+      tone: 'light',
     }
   })
 }
@@ -1288,7 +1288,7 @@ function StoreApp() {
   useEffect(() => {
     const intervalId = setInterval(() => {
       setActivityItems(generateActivityItems())
-    }, 60 * 1000)
+    }, 10 * 60 * 1000)
 
     return () => {
       clearInterval(intervalId)
