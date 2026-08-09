@@ -1215,6 +1215,9 @@ const featuredActivityLabels = {
   en: 'Top sample order today',
   zh: '今日最高示例订单',
 }
+const featuredActivityStorageKey = 'aivorahub-featured-activity-v1'
+const featuredActivityTtlMs = 12 * 60 * 60 * 1000
+const featuredActivityProducts = products.filter((product) => product.price >= 50 && product.price <= 100)
 const storeHeroTitles = {
   ru: 'Подписки на AI-сервисы',
   en: 'AI service subscriptions',
@@ -1223,10 +1226,6 @@ const storeHeroTitles = {
 
 function randomActivityName() {
   return activityNames[Math.floor(Math.random() * activityNames.length)]
-}
-
-function randomActivityProduct() {
-  return activityProducts[Math.floor(Math.random() * activityProducts.length)]
 }
 
 function generateActivityItems() {
@@ -1251,13 +1250,56 @@ function generateActivityItems() {
   })
 }
 
-function generateFeaturedActivityItem() {
+function generateFeaturedActivityItem(now = Date.now()) {
+  const availableProducts = featuredActivityProducts.length ? featuredActivityProducts : products
+  const product = availableProducts[Math.floor(Math.random() * availableProducts.length)]
+
   return {
-    id: `${Date.now()}-featured`,
+    id: `${now}-featured-${product.id}`,
     name: randomActivityName(),
-    product: randomActivityProduct(),
-    amount: Math.floor(Math.random() * 81) + 20,
+    product: `${product.brand} ${product.plan}`,
+    amount: product.price,
+    productId: product.id,
+    generatedAt: now,
   }
+}
+
+function readFeaturedActivityItem() {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  try {
+    const storedItem = JSON.parse(window.localStorage.getItem(featuredActivityStorageKey) || 'null')
+    const generatedAt = Number(storedItem?.generatedAt || 0)
+    const amount = Number(storedItem?.amount || 0)
+
+    if (!storedItem || !generatedAt || Date.now() - generatedAt >= featuredActivityTtlMs || amount < 50 || amount > 100) {
+      return null
+    }
+
+    return storedItem
+  } catch {
+    return null
+  }
+}
+
+function saveFeaturedActivityItem(item) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  try {
+    window.localStorage.setItem(featuredActivityStorageKey, JSON.stringify(item))
+  } catch {
+    // Ignore storage errors in private/restricted browser modes.
+  }
+}
+
+function createFeaturedActivityItem() {
+  const item = generateFeaturedActivityItem()
+  saveFeaturedActivityItem(item)
+  return item
 }
 
 function StoreApp() {
@@ -1275,7 +1317,7 @@ function StoreApp() {
   const [balance, setBalance] = useState(0)
   const [orders, setOrders] = useState([])
   const [activityItems, setActivityItems] = useState(() => generateActivityItems())
-  const [featuredActivityItem, setFeaturedActivityItem] = useState(() => generateFeaturedActivityItem())
+  const [featuredActivityItem, setFeaturedActivityItem] = useState(() => readFeaturedActivityItem() || createFeaturedActivityItem())
   const text = translations[language]
   const promoBonus = promoBonuses[promoCode.trim().toUpperCase()] || 0
   const topUpPayableAmount = Number((selectedTopUpAmount * (1 - promoBonus / 100)).toFixed(2))
@@ -1320,8 +1362,8 @@ function StoreApp() {
 
   useEffect(() => {
     const intervalId = setInterval(() => {
-      setFeaturedActivityItem(generateFeaturedActivityItem())
-    }, 12 * 60 * 60 * 1000)
+      setFeaturedActivityItem(createFeaturedActivityItem())
+    }, featuredActivityTtlMs)
 
     return () => {
       clearInterval(intervalId)
