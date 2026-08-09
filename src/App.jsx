@@ -1210,10 +1210,23 @@ const activityNames = [
 ]
 
 const activityProducts = ['ChatGPT Plus', 'Claude Pro', 'Perplexity Pro', 'Cursor Pro', 'Gemini Pro', 'Kimi Pro']
+const featuredActivityLabels = {
+  ru: 'Самый дорогой sample-заказ сегодня',
+  en: 'Top sample order today',
+  zh: '今日最高示例订单',
+}
 const storeHeroTitles = {
   ru: 'Подписки на AI-сервисы',
   en: 'AI service subscriptions',
   zh: 'AI 服务订阅',
+}
+
+function randomActivityName() {
+  return activityNames[Math.floor(Math.random() * activityNames.length)]
+}
+
+function randomActivityProduct() {
+  return activityProducts[Math.floor(Math.random() * activityProducts.length)]
 }
 
 function generateActivityItems() {
@@ -1238,6 +1251,15 @@ function generateActivityItems() {
   })
 }
 
+function generateFeaturedActivityItem() {
+  return {
+    id: `${Date.now()}-featured`,
+    name: randomActivityName(),
+    product: randomActivityProduct(),
+    amount: Math.floor(Math.random() * 81) + 20,
+  }
+}
+
 function StoreApp() {
   const [selectedProduct, setSelectedProduct] = useState(products[0])
   const [language, setLanguage] = useState('en')
@@ -1253,6 +1275,7 @@ function StoreApp() {
   const [balance, setBalance] = useState(0)
   const [orders, setOrders] = useState([])
   const [activityItems, setActivityItems] = useState(() => generateActivityItems())
+  const [featuredActivityItem, setFeaturedActivityItem] = useState(() => generateFeaturedActivityItem())
   const text = translations[language]
   const promoBonus = promoBonuses[promoCode.trim().toUpperCase()] || 0
   const topUpPayableAmount = Number((selectedTopUpAmount * (1 - promoBonus / 100)).toFixed(2))
@@ -1289,6 +1312,16 @@ function StoreApp() {
     const intervalId = setInterval(() => {
       setActivityItems(generateActivityItems())
     }, 5 * 60 * 1000)
+
+    return () => {
+      clearInterval(intervalId)
+    }
+  }, [])
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setFeaturedActivityItem(generateFeaturedActivityItem())
+    }, 12 * 60 * 60 * 1000)
 
     return () => {
       clearInterval(intervalId)
@@ -1455,6 +1488,24 @@ function StoreApp() {
           </div>
           <aside className="activity-feed" aria-label="Sample activity">
             <span className="activity-feed-label">Sample activity</span>
+            {featuredActivityItem ? (
+              <article className="featured-activity-card" key={featuredActivityItem.id}>
+                <div className="featured-activity-copy">
+                  <small>{featuredActivityLabels[language]}</small>
+                  <strong>{featuredActivityItem.name}</strong>
+                  <span>{featuredActivityItem.product}</span>
+                </div>
+                <b>{formatPrice(featuredActivityItem.amount)}</b>
+                <button
+                  type="button"
+                  className="activity-card-close featured-activity-close"
+                  aria-label="Hide featured order"
+                  onClick={() => setFeaturedActivityItem(null)}
+                >
+                  ×
+                </button>
+              </article>
+            ) : null}
             {activityItems.map((item) => (
               <article className={`activity-card ${item.tone}`} key={item.id}>
                 <strong>{item.name}</strong>
