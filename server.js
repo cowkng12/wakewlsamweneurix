@@ -154,7 +154,7 @@ const promoCodes = {
   KIMI50: { code: 'KIMI50', discountPercent: 50, disabled: true },
   SUB200: { code: 'SUB200', discountPercent: 25, maxRedemptions: 75 },
   SUBS200: { code: 'SUBS200', discountPercent: 25, maxRedemptions: 75 },
-  AIVORA20: { code: 'AIVORA20', discountPercent: 20 },
+  AIVORA20: { code: 'AIVORA20', discountPercent: 20, maxRedemptions: 30 },
   KIMI15: { code: 'KIMI15', discountPercent: 15 },
   START10: { code: 'START10', discountPercent: 10 },
 }
