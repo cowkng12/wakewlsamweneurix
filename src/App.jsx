@@ -1190,6 +1190,54 @@ function ProductCard({ product, onSelect, active, text }) {
   )
 }
 
+const activityNames = [
+  'Olivia Chen',
+  'Daniel Brooks',
+  'Mia Wilson',
+  'Ethan Carter',
+  'Sophia Reed',
+  'Noah Miller',
+  'Lily Zhang',
+  'Jack Morgan',
+  '王伟',
+  '李娜',
+  '张敏',
+  '陈杰',
+  '刘洋',
+  '赵磊',
+  '黄欣',
+  '周雨',
+]
+
+const activityProducts = ['ChatGPT Plus', 'Claude Pro', 'Perplexity Pro', 'Cursor Pro', 'Gemini Pro', 'Kimi Pro']
+const storeHeroTitles = {
+  ru: 'Подписки на AI-сервисы',
+  en: 'AI service subscriptions',
+  zh: 'AI 服务订阅',
+}
+
+function generateActivityItems() {
+  const firstNameIndex = Math.floor(Math.random() * activityNames.length)
+  let secondNameIndex = Math.floor(Math.random() * activityNames.length)
+
+  if (secondNameIndex === firstNameIndex) {
+    secondNameIndex = (secondNameIndex + 1) % activityNames.length
+  }
+
+  return [firstNameIndex, secondNameIndex].map((nameIndex, index) => {
+    const product = activityProducts[Math.floor(Math.random() * activityProducts.length)]
+    const minutes = Math.floor(Math.random() * 8) + 1
+
+    return {
+      id: `${Date.now()}-${index}-${nameIndex}`,
+      name: activityNames[nameIndex],
+      product,
+      minutes,
+      tone: index === 0 ? 'light' : 'red',
+    }
+  })
+}
+
 function StoreApp() {
   const [selectedProduct, setSelectedProduct] = useState(products[0])
   const [language, setLanguage] = useState('en')
@@ -1204,6 +1252,7 @@ function StoreApp() {
   const [isTopUpPanelOpen, setIsTopUpPanelOpen] = useState(false)
   const [balance, setBalance] = useState(0)
   const [orders, setOrders] = useState([])
+  const [activityItems, setActivityItems] = useState(() => generateActivityItems())
   const text = translations[language]
   const promoBonus = promoBonuses[promoCode.trim().toUpperCase()] || 0
   const topUpPayableAmount = Number((selectedTopUpAmount * (1 - promoBonus / 100)).toFixed(2))
@@ -1235,6 +1284,16 @@ function StoreApp() {
       document.body.classList.remove('modal-open')
     }
   }, [isTopUpPanelOpen])
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setActivityItems(generateActivityItems())
+    }, 60 * 1000)
+
+    return () => {
+      clearInterval(intervalId)
+    }
+  }, [])
 
   useEffect(() => {
     const telegramId = currentTelegramUser()?.id
@@ -1390,11 +1449,20 @@ function StoreApp() {
 
       {activeTab === 'catalog' ? (
         <section className="hero-block">
-        <div>
-          <p className="eyebrow">{text.eyebrow}</p>
-          <h1>{text.title}</h1>
-          <p className="hero-copy">{text.hero}</p>
-        </div>
+          <div className="hero-content">
+            <h1>{storeHeroTitles[language]}</h1>
+            <p className="hero-copy">{text.hero}</p>
+          </div>
+          <aside className="activity-feed" aria-label="Sample activity">
+            <span className="activity-feed-label">Sample activity</span>
+            {activityItems.map((item) => (
+              <article className={`activity-card ${item.tone}`} key={item.id}>
+                <strong>{item.name}</strong>
+                <span>{item.product}</span>
+                <small>{item.minutes} min ago</small>
+              </article>
+            ))}
+          </aside>
         </section>
       ) : null}
 
@@ -1569,7 +1637,7 @@ function StoreApp() {
 
 function App() {
   useEffect(() => {
-    document.title = 'AivoraHub'
+    document.title = ' '
   }, [])
 
   if (window.location.pathname === '/activate') {

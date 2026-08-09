@@ -34,6 +34,10 @@ services:
         value: https://pay.crypt.bot/api
       - key: CRYPTO_PAY_ASSET
         value: USDT
+      - key: TON_USD_RATE
+        value: "1.31"
+      - key: TON_USD_RATE_API_URL
+        value: https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd
       - key: WALLET_PAY_TON_ADDRESS
         value: UQC8r4dra0Gy1VlxktwRnsTRTcPoKNoqK4xQH94P3SuRRYWC
       - key: WALLET_PAY_TRC20_ADDRESS

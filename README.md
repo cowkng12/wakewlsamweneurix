@@ -58,6 +58,8 @@ SUPPORT_BOT_URL=https://t.me/your_support_bot
 REQUIRED_CHANNEL_USERNAME=@AivoraaHub
 REQUIRED_CHANNEL_URL=https://t.me/AivoraaHub
 CRYPTO_PAY_TOKEN=токен_CryptoBot
+TON_USD_RATE=1.31
+TON_USD_RATE_API_URL=https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd
 WALLET_PAY_TON_ADDRESS=UQC8r4dra0Gy1VlxktwRnsTRTcPoKNoqK4xQH94P3SuRRYWC
 WALLET_PAY_TRC20_ADDRESS=TJDqXkQx5nqFhq7RNtySUMCYTZ5Hk96o3G
 ACCOUNT_DELIVERY_THRESHOLD=0.1
