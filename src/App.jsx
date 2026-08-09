@@ -1253,6 +1253,7 @@ function StoreApp() {
   const [balance, setBalance] = useState(0)
   const [orders, setOrders] = useState([])
   const [activityItems, setActivityItems] = useState(() => generateActivityItems())
+  const [isActivityFeedVisible, setIsActivityFeedVisible] = useState(true)
   const text = translations[language]
   const promoBonus = promoBonuses[promoCode.trim().toUpperCase()] || 0
   const topUpPayableAmount = Number((selectedTopUpAmount * (1 - promoBonus / 100)).toFixed(2))
@@ -1453,16 +1454,26 @@ function StoreApp() {
             <h1>{storeHeroTitles[language]}</h1>
             <p className="hero-copy">{text.hero}</p>
           </div>
-          <aside className="activity-feed" aria-label="Sample activity">
-            <span className="activity-feed-label">Sample activity</span>
-            {activityItems.map((item) => (
-              <article className={`activity-card ${item.tone}`} key={item.id}>
-                <strong>{item.name}</strong>
-                <span>{item.product}</span>
-                <small>{item.minutes} min ago</small>
-              </article>
-            ))}
-          </aside>
+          {isActivityFeedVisible ? (
+            <aside className="activity-feed" aria-label="Sample activity">
+              <button
+                type="button"
+                className="activity-feed-close"
+                aria-label="Hide recent purchases"
+                onClick={() => setIsActivityFeedVisible(false)}
+              >
+                ×
+              </button>
+              <span className="activity-feed-label">Sample activity</span>
+              {activityItems.map((item) => (
+                <article className={`activity-card ${item.tone}`} key={item.id}>
+                  <strong>{item.name}</strong>
+                  <span>{item.product}</span>
+                  <small>{item.minutes} min ago</small>
+                </article>
+              ))}
+            </aside>
+          ) : null}
         </section>
       ) : null}
 
