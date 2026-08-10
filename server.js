@@ -159,25 +159,34 @@ const promoCodes = {
   START10: { code: 'START10', discountPercent: 10 },
 }
 
-const stockCountsVersion = 2
+const stockCountsVersion = 4
+
+function clampStockCount(value) {
+  return Math.max(4, Math.min(25, value))
+}
+
+function stableHash(input) {
+  return String(input).split('').reduce((hash, char) => ((hash << 5) - hash + char.charCodeAt(0)) | 0, 0)
+}
+
+function defaultStockForProduct(productId, product) {
+  if (productId === 'chatgpt-plus-ready') return 24
+  if (productId === 'chatgpt-go') return 15
+  if (productId === 'chatgpt-business-seat') return 12
+  if (productId === 'chatgpt-pro-ready') return 8
+
+  const price = Number(product?.price) || 0
+  const pricePressure = Math.round(price * 0.35)
+  const jitter = (Math.abs(stableHash(productId)) % 3) - 1
+
+  return clampStockCount(25 - pricePressure + jitter)
+}
 
 function defaultProductStockCounts() {
   const counts = {}
-  let currentStock = 24
-  let nonChatGptIndex = 0
 
-  Object.keys(products).forEach((productId) => {
-    if (productId.startsWith('chatgpt-')) {
-      counts[productId] = 12
-      return
-    }
-
-    if (nonChatGptIndex > 0) {
-      currentStock = Math.max(6, currentStock - (nonChatGptIndex % 2 === 0 ? 2 : 3))
-    }
-
-    counts[productId] = currentStock
-    nonChatGptIndex += 1
+  Object.entries(products).forEach(([productId, product]) => {
+    counts[productId] = defaultStockForProduct(productId, product)
   })
 
   return counts
@@ -191,14 +200,7 @@ function normalizeStockCounts(rawStore = {}) {
     return { ...defaults, ...storedCounts }
   }
 
-  return Object.fromEntries(
-    Object.entries(defaults).map(([productId, defaultStock]) => {
-      const storedStock = Number(storedCounts[productId])
-      const safeStoredStock = Number.isFinite(storedStock) && storedStock >= 0 ? storedStock : 0
-
-      return [productId, Math.max(defaultStock, safeStoredStock)]
-    }),
-  )
+  return defaults
 }
 
 const store = await loadStore()

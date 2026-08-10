@@ -273,21 +273,26 @@ const productGroups = ['Все', 'ChatGPT', 'Grok', 'Claude', 'Cursor', 'Kimi', 
 const topupAmounts = [1, 1.5, ...Array.from({ length: 20 }, (_, index) => (index + 1) * 5)]
 const defaultProductStockCounts = (() => {
   const counts = {}
-  let currentStock = 24
-  let nonChatGptIndex = 0
+
+  const clampStockCount = (value) => Math.max(4, Math.min(25, value))
+  const stableHash = (input) =>
+    String(input).split('').reduce((hash, char) => ((hash << 5) - hash + char.charCodeAt(0)) | 0, 0)
+
+  const defaultStockForProduct = (product) => {
+    if (product.id === 'chatgpt-plus-ready') return 24
+    if (product.id === 'chatgpt-go') return 15
+    if (product.id === 'chatgpt-business-seat') return 12
+    if (product.id === 'chatgpt-pro-ready') return 8
+
+    const price = Number(product.price) || 0
+    const pricePressure = Math.round(price * 0.35)
+    const jitter = (Math.abs(stableHash(product.id)) % 3) - 1
+
+    return clampStockCount(25 - pricePressure + jitter)
+  }
 
   products.forEach((product) => {
-    if (product.group === 'ChatGPT') {
-      counts[product.id] = 12
-      return
-    }
-
-    if (nonChatGptIndex > 0) {
-      currentStock = Math.max(6, currentStock - (nonChatGptIndex % 2 === 0 ? 2 : 3))
-    }
-
-    counts[product.id] = currentStock
-    nonChatGptIndex += 1
+    counts[product.id] = defaultStockForProduct(product)
   })
 
   return counts
