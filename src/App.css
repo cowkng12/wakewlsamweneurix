@@ -30,7 +30,10 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: linear-gradient(180deg, #000000 0%, #050505 56%, #101010 100%);
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.1), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.08), transparent 28%),
+    linear-gradient(180deg, #000000 0%, #050505 56%, #101010 100%);
   color: var(--text);
 }
 
@@ -45,8 +48,25 @@
 }
 
 .wallet-pay-card {
-  width: min(480px, 100%);
+  position: relative;
+  overflow: hidden;
+  width: min(500px, 100%);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 34%),
+    rgba(10, 10, 10, 0.96);
   text-align: center;
+  backdrop-filter: blur(18px);
+}
+
+.wallet-pay-card::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  content: '';
+  opacity: 0.72;
 }
 
 .activation-logo {
@@ -275,24 +295,63 @@
 }
 
 .wallet-pay-card h1 {
+  position: relative;
   margin: 8px 0 18px;
+  font-size: clamp(32px, 7vw, 48px);
 }
 
 .wallet-pay-details {
+  position: relative;
   display: grid;
-  gap: 8px;
+  gap: 12px;
   margin: 20px 0;
   text-align: left;
+}
+
+.wallet-pay-summary,
+.wallet-pay-meta,
+.wallet-pay-address {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
+}
+
+.wallet-pay-summary {
+  display: grid;
+  gap: 6px;
+  text-align: center;
+}
+
+.wallet-pay-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.wallet-pay-address {
+  display: grid;
+  gap: 8px;
 }
 
 .wallet-pay-details span {
   color: var(--subtle);
   font-size: 13px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .wallet-pay-details strong {
   color: var(--text);
   font-size: 22px;
+}
+
+.wallet-pay-summary strong {
+  font-size: clamp(34px, 9vw, 48px);
+  letter-spacing: -0.05em;
 }
 
 .wallet-pay-methods {
@@ -302,7 +361,8 @@
 }
 
 .wallet-pay-methods button {
-  border: 1px solid rgba(255, 255, 255, 0.34);
+  min-height: 52px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(210, 210, 210, 0.64));
   color: #050505;
   box-shadow: 0 12px 30px rgba(255, 255, 255, 0.08);
@@ -316,19 +376,22 @@
 
 .wallet-pay-qr {
   justify-self: center;
-  width: min(280px, 100%);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 16px;
+  width: min(248px, 100%);
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  border-radius: 18px;
+  padding: 14px;
   background: #ffffff;
+  box-shadow: 0 18px 48px rgba(255, 255, 255, 0.12), 0 18px 42px rgba(0, 0, 0, 0.34);
 }
 
 .wallet-pay-details code {
   overflow-wrap: anywhere;
-  border-radius: 8px;
-  padding: 14px;
-  background: #111111;
-  color: var(--blue-deep);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 12px;
+  background: #050505;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 12px;
   line-height: 1.6;
 }
 
@@ -342,6 +405,8 @@
 
 .wallet-pay-card .wallet-pay-paid-button {
   margin-top: 10px;
+  border-color: rgba(255, 255, 255, 0.64);
+  background: linear-gradient(135deg, #ffffff, #cfcfcf);
 }
 
 .language-toggle {
@@ -403,7 +468,7 @@ body.modal-open {
 .hero-block {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 18px;
   margin-bottom: 18px;
   border: 1px solid var(--line);
@@ -452,9 +517,11 @@ body.modal-open {
 
 .activity-feed {
   display: grid;
-  flex: 0 0 min(34vw, 330px);
+  flex: 0 0 auto;
   gap: 8px;
   align-self: stretch;
+  width: min(34vw, 330px);
+  margin-left: auto;
 }
 
 .activity-feed-label {
@@ -847,6 +914,18 @@ body.modal-open {
   line-height: 1.35;
 }
 
+.product-stock {
+  width: fit-content;
+  margin: 10px 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 11px;
+  font-weight: 850;
+}
+
 .product-action {
   justify-self: end;
   border-radius: 8px;
@@ -1130,6 +1209,7 @@ body.modal-open {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     width: 100%;
     flex-basis: auto;
+    margin-left: 0;
   }
 
   .activity-feed-label {
@@ -1242,6 +1322,10 @@ body.modal-open {
   }
 
   .product-guarantee {
+    font-size: 10px;
+  }
+
+  .product-stock {
     font-size: 10px;
   }
 

@@ -271,6 +271,33 @@ const defaultApiBase = import.meta.env.VITE_API_BASE_URL?.trim() || (import.meta
 const languages = ['ru', 'en', 'zh']
 const productGroups = ['Все', 'ChatGPT', 'Grok', 'Claude', 'Cursor', 'Kimi', 'Search', 'Coding', 'Image', 'Video', 'Voice', 'Productivity', 'API', 'Perplexity', 'Gemini', 'Copilot', 'Midjourney', 'Runway', 'Suno', 'Kling', 'Leonardo AI', 'ElevenLabs', 'Canva', 'Notion AI', 'Poe']
 const topupAmounts = [1, 1.5, ...Array.from({ length: 20 }, (_, index) => (index + 1) * 5)]
+const productStockCounts = (() => {
+  const counts = {}
+  const groups = [...new Set(products.map((product) => product.group))]
+
+  groups.forEach((group) => {
+    const groupProducts = products.filter((product) => product.group === group)
+
+    if (group === 'ChatGPT') {
+      groupProducts.forEach((product) => {
+        counts[product.id] = 30
+      })
+      return
+    }
+
+    let currentStock = 29
+
+    groupProducts.forEach((product, index) => {
+      if (index > 0) {
+        currentStock = Math.max(1, currentStock - (index % 2 === 0 ? 2 : 3))
+      }
+
+      counts[product.id] = currentStock
+    })
+  })
+
+  return counts
+})()
 const productAvatars = {
   ChatGPT: { src: 'https://www.google.com/s2/favicons?domain=chatgpt.com&sz=128', fallback: 'GPT' },
   Grok: { src: 'https://www.google.com/s2/favicons?domain=x.com&sz=128', fallback: 'X' },
@@ -311,10 +338,11 @@ const translations = {
     languageLabel: 'RU',
     eyebrow: 'AivoraHub',
     title: 'AivoraHub: подписки на нейросервисы',
-    hero: 'Выберите товар и подайте заявку на покупку.',
+    hero: 'Пополните баланс и выберите продукт.',
     selectPlan: 'Выбрать тариф',
     popularLabel: 'Чаще всего покупают',
     guarantee: 'Полная гарантия и возможность замены товара при возникновении проблем.',
+    stockLeft: (count) => `Осталось ${count} шт.`,
     promos: {
       'claude-pro-duo': 'Промо-лот: 2 аккаунта Pro — $18',
       'cursor-pro-duo': 'Промо-лот: 2 аккаунта Pro — $18',
@@ -420,10 +448,11 @@ const translations = {
     languageLabel: 'EN',
     eyebrow: 'AivoraHub',
     title: 'AivoraHub: AI service subscriptions',
-    hero: 'Choose a product and submit a purchase request.',
+    hero: 'Top up your balance and choose a product.',
     selectPlan: 'Select plan',
     popularLabel: 'Most popular',
     guarantee: 'Full guarantee and replacement if any issues arise.',
+    stockLeft: (count) => `${count} left`,
     promos: {
       'claude-pro-duo': 'Promo lot: 2 Accounts Pro — $18',
       'cursor-pro-duo': 'Promo lot: 2 Accounts Pro — $18',
@@ -529,10 +558,11 @@ const translations = {
     languageLabel: '中文',
     eyebrow: 'AivoraHub',
     title: 'AivoraHub：AI 服务订阅',
-    hero: '选择商品并提交购买申请。',
+    hero: '请先充值余额，再选择商品。',
     selectPlan: '选择套餐',
     popularLabel: '最常购买',
     guarantee: '提供完整保障，如遇问题可更换商品。',
+    stockLeft: (count) => `剩余 ${count} 个`,
     promos: {
       'claude-pro-duo': '优惠商品：2 个 Pro 账号 — $18',
       'cursor-pro-duo': '优惠商品：2 个 Pro 账号 — $18',
@@ -1113,8 +1143,10 @@ function WalletPaymentPage() {
         {payment ? (
           <>
             <div className="wallet-pay-details">
-              <span>{text.amount}</span>
-              <strong>{payment.walletPayment ? `${payment.walletPayment.payableAmount} ${payment.walletPayment.asset}` : formatPrice(payment.payableAmount || payment.amount)}</strong>
+              <div className="wallet-pay-summary">
+                <span>{text.amount}</span>
+                <strong>{payment.walletPayment ? `${payment.walletPayment.payableAmount} ${payment.walletPayment.asset}` : formatPrice(payment.payableAmount || payment.amount)}</strong>
+              </div>
               {!payment.walletPayment ? (
                 <div className="wallet-pay-methods">
                   {payment.cryptoPayAvailable ? <button type="button" onClick={chooseCryptoBot}>{translations[language].cryptoBotMethod}</button> : null}
@@ -1134,10 +1166,14 @@ function WalletPaymentPage() {
               ) : null}
               {payment.walletPayment ? (
                 <>
-                  <span>{text.network}</span>
-                  <strong>{payment.walletPayment.network}</strong>
-                  <span>{text.address}</span>
-                  <code>{payment.walletPayment.address}</code>
+                  <div className="wallet-pay-meta">
+                    <span>{text.network}</span>
+                    <strong>{payment.walletPayment.network}</strong>
+                  </div>
+                  <div className="wallet-pay-address">
+                    <span>{text.address}</span>
+                    <code>{payment.walletPayment.address}</code>
+                  </div>
                 </>
               ) : null}
             </div>
@@ -1157,7 +1193,7 @@ function WalletPaymentPage() {
   )
 }
 
-function ProductCard({ product, onSelect, active, text }) {
+function ProductCard({ product, onSelect, active, text, stockCount }) {
   const [badge, description] = text.productText[product.id]
   const promo = text.promos?.[product.id]
   const avatar = productAvatars[product.group] || { src: '', fallback: product.brand.slice(0, 2).toUpperCase() }
@@ -1183,6 +1219,7 @@ function ProductCard({ product, onSelect, active, text }) {
         {promo ? <p className="product-promo">{promo}</p> : null}
         <p className="product-description">{description}</p>
         <p className="product-guarantee">{text.guarantee}</p>
+        {typeof stockCount === 'number' ? <p className="product-stock">{text.stockLeft(stockCount)}</p> : null}
       </div>
       <strong className="product-price">{formatPrice(product.price)}</strong>
       <span className="product-action">{text.selectPlan}</span>
@@ -1645,6 +1682,7 @@ function StoreApp() {
                   onSelect={handleProductSelect}
                   active={selectedProduct.id === product.id}
                   text={text}
+                  stockCount={productStockCounts[product.id]}
                 />
               ))}
             </div>
