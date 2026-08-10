@@ -271,29 +271,23 @@ const defaultApiBase = import.meta.env.VITE_API_BASE_URL?.trim() || (import.meta
 const languages = ['ru', 'en', 'zh']
 const productGroups = ['Все', 'ChatGPT', 'Grok', 'Claude', 'Cursor', 'Kimi', 'Search', 'Coding', 'Image', 'Video', 'Voice', 'Productivity', 'API', 'Perplexity', 'Gemini', 'Copilot', 'Midjourney', 'Runway', 'Suno', 'Kling', 'Leonardo AI', 'ElevenLabs', 'Canva', 'Notion AI', 'Poe']
 const topupAmounts = [1, 1.5, ...Array.from({ length: 20 }, (_, index) => (index + 1) * 5)]
-const productStockCounts = (() => {
+const defaultProductStockCounts = (() => {
   const counts = {}
-  const groups = [...new Set(products.map((product) => product.group))]
+  let currentStock = 10
+  let nonChatGptIndex = 0
 
-  groups.forEach((group) => {
-    const groupProducts = products.filter((product) => product.group === group)
-
-    if (group === 'ChatGPT') {
-      groupProducts.forEach((product) => {
-        counts[product.id] = 30
-      })
+  products.forEach((product) => {
+    if (product.group === 'ChatGPT') {
+      counts[product.id] = 12
       return
     }
 
-    let currentStock = 29
+    if (nonChatGptIndex > 0) {
+      currentStock = Math.max(1, currentStock - (nonChatGptIndex % 2 === 0 ? 2 : 3))
+    }
 
-    groupProducts.forEach((product, index) => {
-      if (index > 0) {
-        currentStock = Math.max(1, currentStock - (index % 2 === 0 ? 2 : 3))
-      }
-
-      counts[product.id] = currentStock
-    })
+    counts[product.id] = currentStock
+    nonChatGptIndex += 1
   })
 
   return counts
@@ -1405,6 +1399,7 @@ function StoreApp() {
   const [isTopUpPanelOpen, setIsTopUpPanelOpen] = useState(false)
   const [balance, setBalance] = useState(0)
   const [orders, setOrders] = useState([])
+  const [productStockCounts, setProductStockCounts] = useState(() => defaultProductStockCounts)
   const [activityItems, setActivityItems] = useState(() => generateActivityItems())
   const [featuredActivityItem, setFeaturedActivityItem] = useState(() => readFeaturedActivityItem() || createFeaturedActivityItem())
   const text = translations[language]
@@ -1495,6 +1490,20 @@ function StoreApp() {
       .catch(() => {
         setOrders([])
       })
+
+    fetch(`${apiBase}/api/stocks`)
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error('Stocks request failed')
+        }
+        return response.json()
+      })
+      .then(({ stockCounts = {} }) => {
+        setProductStockCounts((current) => ({ ...current, ...stockCounts }))
+      })
+      .catch(() => {
+        setProductStockCounts((current) => current)
+      })
   }, [])
 
   const handleProductSelect = (product) => {
@@ -1530,10 +1539,21 @@ function StoreApp() {
         }
         return response.json()
       })
-      .then(({ balance: updatedBalance = 0, order }) => {
+      .then(({ balance: updatedBalance = 0, order, stockCounts }) => {
         setBalance(Number(updatedBalance) || 0)
         if (order) {
           setOrders((current) => [order, ...current])
+        }
+        if (stockCounts && typeof stockCounts === 'object') {
+          setProductStockCounts((current) => ({
+            ...current,
+            ...stockCounts,
+          }))
+        } else {
+          setProductStockCounts((current) => ({
+            ...current,
+            [selectedProduct.id]: Math.max(0, Number(current[selectedProduct.id] ?? 0) - 1),
+          }))
         }
         setProductPaymentStatus(text.balancePaymentSuccess)
       })

@@ -159,6 +159,28 @@ const promoCodes = {
   START10: { code: 'START10', discountPercent: 10 },
 }
 
+function defaultProductStockCounts() {
+  const counts = {}
+  let currentStock = 10
+  let nonChatGptIndex = 0
+
+  Object.keys(products).forEach((productId) => {
+    if (productId.startsWith('chatgpt-')) {
+      counts[productId] = 12
+      return
+    }
+
+    if (nonChatGptIndex > 0) {
+      currentStock = Math.max(1, currentStock - (nonChatGptIndex % 2 === 0 ? 2 : 3))
+    }
+
+    counts[productId] = currentStock
+    nonChatGptIndex += 1
+  })
+
+  return counts
+}
+
 const store = await loadStore()
 const orders = store.orders
 const topups = store.topups
@@ -168,6 +190,7 @@ const refbotUsers = new Set(store.refbotUsers)
 const promoRedemptions = store.promoRedemptions
 const botUsers = store.botUsers
 const referrals = store.referrals
+const stockCounts = store.stockCounts
 const topupAmounts = [1, 1.5, ...Array.from({ length: 20 }, (_, index) => (index + 1) * 5)]
 const issuedAccessKeys = new Set(Object.keys(activations))
 
@@ -181,6 +204,7 @@ function normalizeStore(rawStore = {}) {
     promoRedemptions: rawStore.promoRedemptions && typeof rawStore.promoRedemptions === 'object' ? rawStore.promoRedemptions : {},
     botUsers: rawStore.botUsers && typeof rawStore.botUsers === 'object' ? rawStore.botUsers : {},
     referrals: rawStore.referrals && typeof rawStore.referrals === 'object' ? rawStore.referrals : {},
+    stockCounts: { ...defaultProductStockCounts(), ...(rawStore.stockCounts && typeof rawStore.stockCounts === 'object' ? rawStore.stockCounts : {}) },
   }
 }
 
@@ -252,12 +276,12 @@ async function loadStore() {
       console.error('Store load failed', error)
     }
 
-    return { orders: [], topups: [], balances: {}, activations: {}, refbotUsers: [], promoRedemptions: {}, botUsers: {}, referrals: {} }
+    return { orders: [], topups: [], balances: {}, activations: {}, refbotUsers: [], promoRedemptions: {}, botUsers: {}, referrals: {}, stockCounts: defaultProductStockCounts() }
   }
 }
 
 async function saveStore() {
-  const snapshot = { orders, topups, balances: Object.fromEntries(balances), activations, refbotUsers: Array.from(refbotUsers), promoRedemptions, botUsers, referrals }
+  const snapshot = { orders, topups, balances: Object.fromEntries(balances), activations, refbotUsers: Array.from(refbotUsers), promoRedemptions, botUsers, referrals, stockCounts }
 
   try {
     if (await saveSupabaseStore(snapshot)) {
@@ -309,6 +333,11 @@ async function refreshStore() {
     delete referrals[telegramId]
   })
   Object.assign(referrals, freshStore.referrals)
+
+  Object.keys(stockCounts).forEach((productId) => {
+    delete stockCounts[productId]
+  })
+  Object.assign(stockCounts, freshStore.stockCounts)
 
   issuedAccessKeys.clear()
   Object.keys(activations).forEach((key) => {
@@ -734,6 +763,10 @@ app.get('/api/config', (request, response) => {
     products,
     walletPayments: walletPayOptions,
   })
+})
+
+app.get('/api/stocks', (request, response) => {
+  response.json({ stockCounts })
 })
 
 app.get('/health', (request, response) => {
@@ -1276,6 +1309,7 @@ app.post('/api/orders/balance', async (request, response) => {
   }
 
   orders.unshift(order)
+  stockCounts[productId] = Math.max(0, Number(stockCounts[productId] || 0) - 1)
   registerActivationKey(order.accessKey, telegramId, order.price, 'balance_order')
   await saveStore()
 
@@ -1296,7 +1330,7 @@ app.post('/api/orders/balance', async (request, response) => {
     await bot.telegram.sendMessage(adminChatId, adminLines.join('\n'))
   }
 
-  response.status(201).json({ order, balance: updatedBalance })
+  response.status(201).json({ order, balance: updatedBalance, stockCounts })
 })
 
 app.use(express.static(path.join(__dirname, 'dist')))
