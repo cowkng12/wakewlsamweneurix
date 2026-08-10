@@ -273,7 +273,7 @@ const productGroups = ['Все', 'ChatGPT', 'Grok', 'Claude', 'Cursor', 'Kimi', 
 const topupAmounts = [1, 1.5, ...Array.from({ length: 20 }, (_, index) => (index + 1) * 5)]
 const defaultProductStockCounts = (() => {
   const counts = {}
-  let currentStock = 10
+  let currentStock = 24
   let nonChatGptIndex = 0
 
   products.forEach((product) => {
@@ -283,7 +283,7 @@ const defaultProductStockCounts = (() => {
     }
 
     if (nonChatGptIndex > 0) {
-      currentStock = Math.max(1, currentStock - (nonChatGptIndex % 2 === 0 ? 2 : 3))
+      currentStock = Math.max(6, currentStock - (nonChatGptIndex % 2 === 0 ? 2 : 3))
     }
 
     counts[product.id] = currentStock

@@ -159,9 +159,11 @@ const promoCodes = {
   START10: { code: 'START10', discountPercent: 10 },
 }
 
+const stockCountsVersion = 2
+
 function defaultProductStockCounts() {
   const counts = {}
-  let currentStock = 10
+  let currentStock = 24
   let nonChatGptIndex = 0
 
   Object.keys(products).forEach((productId) => {
@@ -171,7 +173,7 @@ function defaultProductStockCounts() {
     }
 
     if (nonChatGptIndex > 0) {
-      currentStock = Math.max(1, currentStock - (nonChatGptIndex % 2 === 0 ? 2 : 3))
+      currentStock = Math.max(6, currentStock - (nonChatGptIndex % 2 === 0 ? 2 : 3))
     }
 
     counts[productId] = currentStock
@@ -179,6 +181,24 @@ function defaultProductStockCounts() {
   })
 
   return counts
+}
+
+function normalizeStockCounts(rawStore = {}) {
+  const defaults = defaultProductStockCounts()
+  const storedCounts = rawStore.stockCounts && typeof rawStore.stockCounts === 'object' ? rawStore.stockCounts : {}
+
+  if (rawStore.stockCountsVersion === stockCountsVersion) {
+    return { ...defaults, ...storedCounts }
+  }
+
+  return Object.fromEntries(
+    Object.entries(defaults).map(([productId, defaultStock]) => {
+      const storedStock = Number(storedCounts[productId])
+      const safeStoredStock = Number.isFinite(storedStock) && storedStock >= 0 ? storedStock : 0
+
+      return [productId, Math.max(defaultStock, safeStoredStock)]
+    }),
+  )
 }
 
 const store = await loadStore()
@@ -204,7 +224,8 @@ function normalizeStore(rawStore = {}) {
     promoRedemptions: rawStore.promoRedemptions && typeof rawStore.promoRedemptions === 'object' ? rawStore.promoRedemptions : {},
     botUsers: rawStore.botUsers && typeof rawStore.botUsers === 'object' ? rawStore.botUsers : {},
     referrals: rawStore.referrals && typeof rawStore.referrals === 'object' ? rawStore.referrals : {},
-    stockCounts: { ...defaultProductStockCounts(), ...(rawStore.stockCounts && typeof rawStore.stockCounts === 'object' ? rawStore.stockCounts : {}) },
+    stockCounts: normalizeStockCounts(rawStore),
+    stockCountsVersion,
   }
 }
 
@@ -276,12 +297,12 @@ async function loadStore() {
       console.error('Store load failed', error)
     }
 
-    return { orders: [], topups: [], balances: {}, activations: {}, refbotUsers: [], promoRedemptions: {}, botUsers: {}, referrals: {}, stockCounts: defaultProductStockCounts() }
+    return { orders: [], topups: [], balances: {}, activations: {}, refbotUsers: [], promoRedemptions: {}, botUsers: {}, referrals: {}, stockCounts: defaultProductStockCounts(), stockCountsVersion }
   }
 }
 
 async function saveStore() {
-  const snapshot = { orders, topups, balances: Object.fromEntries(balances), activations, refbotUsers: Array.from(refbotUsers), promoRedemptions, botUsers, referrals, stockCounts }
+  const snapshot = { orders, topups, balances: Object.fromEntries(balances), activations, refbotUsers: Array.from(refbotUsers), promoRedemptions, botUsers, referrals, stockCounts, stockCountsVersion }
 
   try {
     if (await saveSupabaseStore(snapshot)) {
