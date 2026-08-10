@@ -521,6 +521,7 @@ body.modal-open {
   gap: 8px;
   align-self: stretch;
   width: min(34vw, 330px);
+  min-width: 0;
   margin-left: auto;
 }
 
@@ -1208,6 +1209,7 @@ body.modal-open {
   .activity-feed {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     width: 100%;
+    min-width: 0;
     flex-basis: auto;
     margin-left: 0;
   }
@@ -1280,6 +1282,7 @@ body.modal-open {
   .activity-feed {
     grid-template-columns: 1fr;
     gap: 6px;
+    width: 100%;
   }
 
   .activity-card {

@@ -1679,42 +1679,6 @@ if (botToken) {
     }
   }
 
-  function promoBroadcastMessage(language) {
-    const messages = {
-      ru: [
-        '⭐ AivoraHub уже 200 подписчиков',
-        '',
-        'Актуальный промокод: SUB200',
-        'Он дает скидку 25% на оплату пополнения баланса.',
-        '',
-        'Открой каталог, нажми пополнение баланса и введи промокод в поле скидки.',
-        '',
-        'Также в каталоге появились Kimi K2, Kimi Pro и Kimi API Pack.',
-      ],
-      en: [
-        '⭐ AivoraHub reached 200 subscribers',
-        '',
-        'Current promo code: SUB200',
-        'It gives 25% off your balance top-up payment.',
-        '',
-        'Open the catalog, top up your balance and enter the promo code in the discount field.',
-        '',
-        'Kimi K2, Kimi Pro and Kimi API Pack are now in the catalog.',
-      ],
-      zh: [
-        '⭐ AivoraHub 已达到 200 位订阅者',
-        '',
-        '当前优惠码：SUB200',
-        '充值余额付款享 25% 折扣。',
-        '',
-        '打开目录，充值余额，并在折扣输入框中输入优惠码。',
-        '',
-        'Kimi K2、Kimi Pro 和 Kimi API Pack 已加入目录。',
-      ],
-    }
-
-    return (messages[language] || messages.ru).join('\n')
-  }
 
   function trackReferral(referrerId, referredUser) {
     const inviterId = String(referrerId || '').trim()
@@ -1873,9 +1837,6 @@ if (botToken) {
       return
     }
 
-    await context.reply('Promo broadcast is disabled. Active promo: AIVORA20 only.')
-    return
-
     await refreshStore()
 
     const balance = balances.get(telegramId) || 0
@@ -1950,23 +1911,7 @@ if (botToken) {
       return
     }
 
-    await refreshStore()
-
-    const recipients = Object.values(botUsers)
-    let sentCount = 0
-    let failedCount = 0
-
-    for (const recipient of recipients) {
-      try {
-        await bot.telegram.sendMessage(recipient.id, promoBroadcastMessage(recipient.language), mainKeyboard(recipient.language || 'ru', recipient.id))
-        sentCount += 1
-      } catch (error) {
-        failedCount += 1
-        console.error('Promo broadcast failed', { telegramId: recipient.id, error: error?.message })
-      }
-    }
-
-    await context.reply(`Рассылка промокодов завершена. Отправлено: ${sentCount}. Ошибок: ${failedCount}.`)
+    await context.reply('Promo broadcast is disabled. Active promo: AIVORA20 only.')
   })
 
   bot.command('refstats', async (context) => {
