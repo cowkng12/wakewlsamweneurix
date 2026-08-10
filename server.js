@@ -1830,9 +1830,44 @@ if (botToken) {
       '/refstats - статистика, кто сколько людей пригласил',
       '/confirmtopup - подтвердить последнее неоплаченное пополнение',
       '/confirmtopup <topup_id> - подтвердить конкретное пополнение',
+      '/getbalance <telegram_id> - посмотреть баланс пользователя',
       '/setbalance <telegram_id> <amount> - установить баланс пользователю',
       '/myid - показать ваш Telegram ID',
       'Кнопка Ответить под обращением - ответить пользователю через бота',
+    ].join('\n'))
+  })
+
+  bot.command(['getbalance', 'balanceof'], async (context) => {
+    if (String(context.from.id) !== adminChatId) {
+      await context.reply('Команда доступна только администратору.')
+      return
+    }
+
+    const [, telegramId = ''] = context.message.text.trim().split(/\s+/)
+
+    if (!/^\d+$/.test(telegramId)) {
+      await context.reply('Использование: /getbalance <telegram_id>')
+      return
+    }
+
+    await refreshStore()
+
+    const balance = balances.get(telegramId) || 0
+    const user = botUsers[telegramId]
+    const userOrders = orders.filter((order) => String(order.telegramUser?.id || '').trim() === telegramId)
+    const paidOrders = userOrders.filter((order) => order.status === 'paid_from_balance' || order.status === 'paid')
+    const name = user?.username
+      ? `@${user.username}`
+      : [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'неизвестно'
+
+    await context.reply([
+      'Баланс пользователя',
+      '',
+      `ID: ${telegramId}`,
+      `Пользователь: ${name}`,
+      `Баланс: $${Number(balance).toFixed(2)}`,
+      `Заказов всего: ${userOrders.length}`,
+      `Оплаченных заказов: ${paidOrders.length}`,
     ].join('\n'))
   })
 
