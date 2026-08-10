@@ -1222,168 +1222,10 @@ function ProductCard({ product, onSelect, active, text, stockCount }) {
   )
 }
 
-const activityNames = [
-  'Olivia Chen',
-  'Daniel Brooks',
-  'Mia Wilson',
-  'Ethan Carter',
-  'Sophia Reed',
-  'Noah Miller',
-  'Lily Zhang',
-  'Jack Morgan',
-  'Ava Parker',
-  'Lucas White',
-  'Emma Hayes',
-  'Mason Scott',
-  'Grace Turner',
-  'Henry Adams',
-  'Ella Bennett',
-  'Logan Cooper',
-  'Chloe Morris',
-  'Ryan Foster',
-  'Amelia Hughes',
-  'James Collins',
-  'Zoe Peterson',
-  'Leo Richardson',
-  'Nora Sullivan',
-  'Owen Mitchell',
-  'Aria Campbell',
-  'Caleb Morgan',
-  'Ivy Russell',
-  'Nathan Brooks',
-  'Hannah Ward',
-  'Aaron Price',
-  'Sofia Torres',
-  'Liam Murphy',
-  'Emily Watson',
-  'Kai Anderson',
-  'Isabella Young',
-  'Maxwell Reed',
-  'Victoria Gray',
-  'David Nelson',
-  '王伟',
-  '李娜',
-  '张敏',
-  '陈杰',
-  '刘洋',
-  '赵磊',
-  '黄欣',
-  '周雨',
-  '孙悦',
-  '吴涛',
-  '郑浩',
-  '冯雪',
-  '韩宇',
-  '曹琳',
-  '蒋晨',
-  '谢宁',
-  '邓琪',
-  '许航',
-  '沈梦',
-  '曾睿',
-  '叶婷',
-  '罗峰',
-  '梁静',
-  '宋阳',
-  '唐佳',
-  '潘越',
-  '魏然',
-  '程曦',
-  '姚鑫',
-  '袁博',
-]
-
-const activityProducts = ['ChatGPT Plus', 'Claude Pro', 'Perplexity Pro', 'Cursor Pro', 'Gemini Pro', 'Kimi Pro']
-const featuredActivityLabels = {
-  ru: 'Самый дорогой sample-заказ сегодня',
-  en: 'Top sample order today',
-  zh: '今日最高示例订单',
-}
-const featuredActivityStorageKey = 'aivorahub-featured-activity-v1'
-const featuredActivityTtlMs = 12 * 60 * 60 * 1000
-const featuredActivityProducts = products.filter((product) => product.price >= 50 && product.price <= 100)
 const storeHeroTitles = {
-  ru: 'Подписки на AI-сервисы',
+  ru: 'РџРѕРґРїРёСЃРєРё РЅР° AI-СЃРµСЂРІРёСЃС‹',
   en: 'AI service subscriptions',
-  zh: 'AI 服务订阅',
-}
-
-function randomActivityName() {
-  return activityNames[Math.floor(Math.random() * activityNames.length)]
-}
-
-function generateActivityItems() {
-  const firstNameIndex = Math.floor(Math.random() * activityNames.length)
-  let secondNameIndex = Math.floor(Math.random() * activityNames.length)
-
-  if (secondNameIndex === firstNameIndex) {
-    secondNameIndex = (secondNameIndex + 1) % activityNames.length
-  }
-
-  return [firstNameIndex, secondNameIndex].map((nameIndex, index) => {
-    const product = activityProducts[Math.floor(Math.random() * activityProducts.length)]
-    const minutes = Math.floor(Math.random() * 8) + 1
-
-    return {
-      id: `${Date.now()}-${index}-${nameIndex}`,
-      name: activityNames[nameIndex],
-      product,
-      minutes,
-      tone: 'light',
-    }
-  })
-}
-
-function generateFeaturedActivityItem(now = Date.now()) {
-  const availableProducts = featuredActivityProducts.length ? featuredActivityProducts : products
-  const product = availableProducts[Math.floor(Math.random() * availableProducts.length)]
-
-  return {
-    id: `${now}-featured-${product.id}`,
-    name: randomActivityName(),
-    product: `${product.brand} ${product.plan}`,
-    amount: product.price,
-    productId: product.id,
-    generatedAt: now,
-  }
-}
-
-function readFeaturedActivityItem() {
-  if (typeof window === 'undefined') {
-    return null
-  }
-
-  try {
-    const storedItem = JSON.parse(window.localStorage.getItem(featuredActivityStorageKey) || 'null')
-    const generatedAt = Number(storedItem?.generatedAt || 0)
-    const amount = Number(storedItem?.amount || 0)
-
-    if (!storedItem || !generatedAt || Date.now() - generatedAt >= featuredActivityTtlMs || amount < 50 || amount > 100) {
-      return null
-    }
-
-    return storedItem
-  } catch {
-    return null
-  }
-}
-
-function saveFeaturedActivityItem(item) {
-  if (typeof window === 'undefined') {
-    return
-  }
-
-  try {
-    window.localStorage.setItem(featuredActivityStorageKey, JSON.stringify(item))
-  } catch {
-    // Ignore storage errors in private/restricted browser modes.
-  }
-}
-
-function createFeaturedActivityItem() {
-  const item = generateFeaturedActivityItem()
-  saveFeaturedActivityItem(item)
-  return item
+  zh: 'AI жњЌеЉЎи®ўй…',
 }
 
 function StoreApp() {
@@ -1401,8 +1243,6 @@ function StoreApp() {
   const [balance, setBalance] = useState(0)
   const [orders, setOrders] = useState([])
   const [productStockCounts, setProductStockCounts] = useState(() => defaultProductStockCounts)
-  const [activityItems, setActivityItems] = useState(() => generateActivityItems())
-  const [featuredActivityItem, setFeaturedActivityItem] = useState(() => readFeaturedActivityItem() || createFeaturedActivityItem())
   const text = translations[language]
   const promoBonus = promoBonuses[promoCode.trim().toUpperCase()] || 0
   const topUpPayableAmount = Number((selectedTopUpAmount * (1 - promoBonus / 100)).toFixed(2))
@@ -1434,26 +1274,6 @@ function StoreApp() {
       document.body.classList.remove('modal-open')
     }
   }, [isTopUpPanelOpen])
-
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setActivityItems(generateActivityItems())
-    }, 10 * 60 * 1000)
-
-    return () => {
-      clearInterval(intervalId)
-    }
-  }, [])
-
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setFeaturedActivityItem(createFeaturedActivityItem())
-    }, featuredActivityTtlMs)
-
-    return () => {
-      clearInterval(intervalId)
-    }
-  }, [])
 
   useEffect(() => {
     const telegramId = currentTelegramUser()?.id
@@ -1638,42 +1458,6 @@ function StoreApp() {
             <h1>{storeHeroTitles[language]}</h1>
             <p className="hero-copy">{text.hero}</p>
           </div>
-          <aside className="activity-feed" aria-label="Sample activity">
-            <span className="activity-feed-label">Sample activity</span>
-            {featuredActivityItem ? (
-              <article className="featured-activity-card" key={featuredActivityItem.id}>
-                <div className="featured-activity-copy">
-                  <small>{featuredActivityLabels[language]}</small>
-                  <strong>{featuredActivityItem.name}</strong>
-                  <span>{featuredActivityItem.product}</span>
-                </div>
-                <b>{formatPrice(featuredActivityItem.amount)}</b>
-                <button
-                  type="button"
-                  className="activity-card-close featured-activity-close"
-                  aria-label="Hide featured order"
-                  onClick={() => setFeaturedActivityItem(null)}
-                >
-                  ×
-                </button>
-              </article>
-            ) : null}
-            {activityItems.map((item) => (
-              <article className={`activity-card ${item.tone}`} key={item.id}>
-                <strong>{item.name}</strong>
-                <span>{item.product}</span>
-                <small>{item.minutes} min ago</small>
-                <button
-                  type="button"
-                  className="activity-card-close"
-                  aria-label="Hide purchase"
-                  onClick={() => setActivityItems((currentItems) => currentItems.filter((currentItem) => currentItem.id !== item.id))}
-                >
-                  ×
-                </button>
-              </article>
-            ))}
-          </aside>
         </section>
       ) : null}
 
