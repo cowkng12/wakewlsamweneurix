@@ -88,7 +88,7 @@ const keepAliveEnabled = process.env.KEEP_ALIVE_ENABLED !== 'false'
 const keepAliveIntervalMs = Number(process.env.KEEP_ALIVE_INTERVAL_MS || 5 * 60 * 1000)
 
 const products = {
-  'chatgpt-plus-ready': { title: 'ChatGPT Plus Ready Account', price: 1.5 },
+  'chatgpt-plus-ready': { title: 'ChatGPT Plus Ready Account', price: 2 },
   'chatgpt-go': { title: 'ChatGPT Go', price: 2.5 },
   'chatgpt-pro-ready': { title: 'ChatGPT Pro Ready Account', price: 60 },
   'chatgpt-business-seat': { title: 'ChatGPT Business Seat', price: 15 },
@@ -155,6 +155,7 @@ const promoCodes = {
   SUB200: { code: 'SUB200', discountPercent: 25, maxRedemptions: 75, disabled: true },
   SUBS200: { code: 'SUBS200', discountPercent: 25, maxRedemptions: 75, disabled: true },
   AIVORA20: { code: 'AIVORA20', discountPercent: 20, maxRedemptions: 30 },
+  '100SUBS': { code: '100SUBS', discountPercent: 30, maxRedemptions: 30 },
   KIMI15: { code: 'KIMI15', discountPercent: 15, disabled: true },
   START10: { code: 'START10', discountPercent: 10, disabled: true },
 }
