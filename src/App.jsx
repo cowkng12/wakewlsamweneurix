@@ -868,15 +868,7 @@ function LaunchSplash({ progress }) {
         <img className="launch-rocket" src="/aivora-launch-rocket.png" alt="" />
       </div>
       <span className="launch-trail" aria-hidden="true" />
-      <section className="launch-brand" aria-label="AivoraHub, AI tools, one hub">
-        <div className="launch-brand-name"><span>Aivora</span><b>Hub</b></div>
-        <p>AI TOOLS <i>•</i> ONE HUB</p>
-        <div className="launch-services" aria-hidden="true">
-          <img src="/chatgpt-logo-white.png" alt="" />
-          <img src="/claude-logo-white.png" alt="" />
-          <img src="/cursor-logo-white.png" alt="" />
-        </div>
-      </section>
+      <img className="launch-brand" src="/aivorahub-brand-reveal.png" alt="AivoraHub, AI Tools, One Hub" />
       <div className="launch-progress">
         <div className="launch-loading" aria-hidden="true"><span style={{ width: `${progress}%` }} /></div>
         <strong>{progress}%</strong>
@@ -1952,8 +1944,8 @@ function App() {
         setLaunchProgress(100)
         setIsLaunching(false)
         setIsRevealing(true)
-      }, 3250)
-      const revealTimer = window.setTimeout(() => setIsRevealing(false), 3550)
+      }, 3500)
+      const revealTimer = window.setTimeout(() => setIsRevealing(false), 3800)
 
     return () => {
       window.clearInterval(progressTimer)
