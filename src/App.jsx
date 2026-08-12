@@ -336,6 +336,7 @@ const roulettePrizes = [
   { id: 'balance-100', icon: '$', image: '', labels: { ru: '$1 на баланс', en: '$1 balance', zh: '$1 余额' } },
   { id: 'chatgpt-plus', icon: 'GPT', image: productAvatars.ChatGPT.src, labels: { ru: 'ChatGPT Plus', en: 'ChatGPT Plus', zh: 'ChatGPT Plus' } },
 ]
+const rouletteReelPrizes = Array.from({ length: 7 }, () => roulettePrizes).flat()
 
 const rouletteText = {
   ru: {
@@ -1249,7 +1250,7 @@ const storeHeroTitles = {
   zh: 'AI жњЌеЉЎи®ўй…',
 }
 
-function RoulettePanel({ language, spin, canSpin, isSpinning, rotation, error, onSpin }) {
+function RoulettePanel({ language, spin, canSpin, isSpinning, reelPosition, error, onSpin }) {
   const copy = rouletteText[language]
   const wonPrize = spin?.prize
   const wonPrizeView = roulettePrizes.find((prize) => prize.id === wonPrize?.id)
@@ -1267,28 +1268,23 @@ function RoulettePanel({ language, spin, canSpin, isSpinning, rotation, error, o
       </header>
 
       <div className="roulette-stage">
-        <span className="roulette-pointer" aria-hidden="true" />
-        <div className="roulette-wheel-shell">
-          <div className="roulette-wheel" style={{ transform: `rotate(${rotation}deg)` }}>
-            {roulettePrizes.map((prize, index) => {
-              const angle = index * (360 / roulettePrizes.length)
-              return (
-                <div key={prize.id} className="roulette-wheel-prize" style={{ transform: `rotate(${angle}deg)` }}>
-                  <span className="roulette-prize-icon">
-                    {prize.image ? <img src={prize.image} alt="" /> : prize.icon}
-                  </span>
-                  <strong>{prize.labels[language]}</strong>
-                </div>
-              )
-            })}
+        <div className="roulette-reel-window">
+          <span className="roulette-pointer" aria-hidden="true" />
+          <div className="roulette-reel" style={{ transform: `translateX(-${56 + reelPosition * 122}px)` }}>
+            {rouletteReelPrizes.map((prize, index) => (
+              <div key={`${prize.id}-${index}`} className="roulette-reel-prize">
+                <span className="roulette-prize-icon">
+                  {prize.image ? <img src={prize.image} alt="" /> : prize.icon}
+                </span>
+                <strong>{prize.labels[language]}</strong>
+              </div>
+            ))}
           </div>
-          <div className="roulette-hub">A</div>
         </div>
+        <button className="roulette-spin-button" type="button" disabled={!canSpin || isSpinning} onClick={onSpin}>
+          <span>{isSpinning ? copy.spinning : canSpin ? copy.spin : copy.used}</span>
+        </button>
       </div>
-
-      <button className="roulette-spin-button" type="button" disabled={!canSpin || isSpinning} onClick={onSpin}>
-        {isSpinning ? copy.spinning : canSpin ? copy.spin : copy.used}
-      </button>
       {error ? <p className="roulette-error">{error}</p> : null}
 
       {wonPrize && !isSpinning ? (
@@ -1340,7 +1336,7 @@ function StoreApp() {
   const [rouletteSpin, setRouletteSpin] = useState(null)
   const [canSpinRoulette, setCanSpinRoulette] = useState(true)
   const [isRouletteSpinning, setIsRouletteSpinning] = useState(false)
-  const [rouletteRotation, setRouletteRotation] = useState(0)
+  const [rouletteReelPosition, setRouletteReelPosition] = useState(2)
   const [rouletteError, setRouletteError] = useState('')
   const text = translations[language]
   const rouletteCopy = rouletteText[language]
@@ -1437,6 +1433,10 @@ function StoreApp() {
       .then(({ canSpin = false, spin = null }) => {
         setCanSpinRoulette(canSpin)
         setRouletteSpin(spin)
+        if (spin?.prize?.id) {
+          const prizeIndex = Math.max(0, roulettePrizes.findIndex((prize) => prize.id === spin.prize.id))
+          setRouletteReelPosition(25 + prizeIndex)
+        }
       })
       .catch(() => {
         setCanSpinRoulette(false)
@@ -1467,9 +1467,7 @@ function StoreApp() {
       })
       .then(({ spin, balance: updatedBalance, order, stockCounts }) => {
         const prizeIndex = Math.max(0, roulettePrizes.findIndex((prize) => prize.id === spin?.prize?.id))
-        const sectorAngle = 360 / roulettePrizes.length
-        const targetAngle = 360 - prizeIndex * sectorAngle
-        setRouletteRotation((current) => current + 5 * 360 + targetAngle - (current % 360))
+        setRouletteReelPosition(25 + prizeIndex)
         setCanSpinRoulette(false)
         window.setTimeout(() => {
           setRouletteSpin(spin)
@@ -1717,7 +1715,7 @@ function StoreApp() {
           spin={rouletteSpin}
           canSpin={canSpinRoulette}
           isSpinning={isRouletteSpinning}
-          rotation={rouletteRotation}
+          reelPosition={rouletteReelPosition}
           error={rouletteError}
           onSpin={handleRouletteSpin}
         />
