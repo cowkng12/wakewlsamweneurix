@@ -121,8 +121,7 @@
   width: min(440px, 94vw);
   height: auto;
   opacity: 0;
-  transform: translate(-50%, calc(-50% + 46px)) scale(0.92);
-  filter: blur(22px);
+  transform: translate(-50%, calc(-50% + 34px)) scale(0.96);
   animation: launch-brand-in 0.78s cubic-bezier(0.16, 0.84, 0.25, 1) 2.02s forwards;
 }
 
@@ -215,17 +214,14 @@
 @keyframes launch-brand-in {
   0% {
     opacity: 0;
-    transform: translate(-50%, calc(-50% + 46px)) scale(0.92);
-    filter: blur(24px);
+    transform: translate(-50%, calc(-50% + 34px)) scale(0.96);
   }
   58% {
     opacity: 0.88;
-    filter: blur(7px);
   }
   100% {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
-    filter: blur(0);
   }
 }
 
