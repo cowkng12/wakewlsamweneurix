@@ -161,11 +161,13 @@ const promoCodes = {
 }
 
 const roulettePrizes = [
-  { id: 'balance-025', type: 'balance', amount: 0.25, weight: 29 },
+  { id: 'balance-025', type: 'balance', amount: 0.25, weight: 28.75 },
   { id: 'balance-050', type: 'balance', amount: 0.5, weight: 24 },
   { id: 'promo-20', type: 'promo', discountPercent: 20, weight: 22 },
   { id: 'balance-100', type: 'balance', amount: 1, weight: 20 },
   { id: 'chatgpt-plus', type: 'product', productId: 'chatgpt-plus-ready', weight: 5 },
+  { id: 'cursor-pro', type: 'product', productId: 'cursor-pro', weight: 0.2 },
+  { id: 'claude-pro', type: 'product', productId: 'claude-pro', weight: 0.05 },
 ]
 
 const stockCountsVersion = 4
@@ -949,6 +951,24 @@ app.post('/api/roulette/spin', async (request, response) => {
 
   if (order) {
     await bot?.telegram.sendMessage(telegramId, purchaseDeliveryMessage(order.accessKey, language))
+  }
+
+  if (bot && adminChatId) {
+    const winner = telegramUser?.username ? `@${telegramUser.username}` : telegramId
+    const prizeLabel = prize.type === 'balance'
+      ? `$${prize.amount} на баланс`
+      : prize.type === 'promo'
+        ? `купон 20% (${spin.promoCode})`
+        : products[prize.productId]?.title || prize.id
+
+    try {
+      await bot.telegram.sendMessage(
+        adminChatId,
+        `🎰 Выпал приз в рулетке\nПользователь: ${winner}\nTelegram ID: ${telegramId}\nПриз: ${prizeLabel}\nБаланс после: $${balances.get(telegramId) || 0}`,
+      )
+    } catch (error) {
+      console.error('Roulette admin notification failed', error?.message || error)
+    }
   }
 
   response.status(201).json({

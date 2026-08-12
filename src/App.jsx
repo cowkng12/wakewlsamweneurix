@@ -334,7 +334,9 @@ const roulettePrizes = [
   { id: 'balance-050', icon: '$', image: '', labels: { ru: '$0.50 на баланс', en: '$0.50 balance', zh: '$0.50 余额' } },
   { id: 'promo-20', icon: '%', image: '', labels: { ru: 'Промокод 20%', en: '20% promo code', zh: '20% 优惠码' } },
   { id: 'balance-100', icon: '$', image: '', labels: { ru: '$1 на баланс', en: '$1 balance', zh: '$1 余额' } },
-  { id: 'chatgpt-plus', icon: 'GPT', image: productAvatars.ChatGPT.src, labels: { ru: 'ChatGPT Plus', en: 'ChatGPT Plus', zh: 'ChatGPT Plus' } },
+  { id: 'chatgpt-plus', icon: 'GPT', image: '/chatgpt-logo-white.png', labels: { ru: 'ChatGPT Plus', en: 'ChatGPT Plus', zh: 'ChatGPT Plus' } },
+  { id: 'cursor-pro', icon: 'CR', image: productAvatars.Cursor.src, labels: { ru: 'Cursor Pro', en: 'Cursor Pro', zh: 'Cursor Pro' } },
+  { id: 'claude-pro', icon: 'CL', image: productAvatars.Claude.src, labels: { ru: 'Claude Pro', en: 'Claude Pro', zh: 'Claude Pro' } },
 ]
 const rouletteReelPrizes = Array.from({ length: 40 }, () => roulettePrizes).flat()
 
@@ -1250,7 +1252,7 @@ const storeHeroTitles = {
   zh: 'AI жњЌеЉЎи®ўй…',
 }
 
-function RoulettePanel({ language, spin, canSpin, isSpinning, reelPosition, error, onSpin }) {
+function RoulettePanel({ language, spin, canSpin, isSpinning, reelPosition, isReelAnimated, error, onSpin }) {
   const copy = rouletteText[language]
   const wonPrize = spin?.prize
   const wonPrizeView = roulettePrizes.find((prize) => prize.id === wonPrize?.id)
@@ -1270,7 +1272,7 @@ function RoulettePanel({ language, spin, canSpin, isSpinning, reelPosition, erro
       <div className="roulette-stage">
         <div className="roulette-reel-window">
           <span className="roulette-pointer" aria-hidden="true" />
-          <div className="roulette-reel" style={{ transform: `translateX(-${56 + reelPosition * 122}px)` }}>
+          <div className={`roulette-reel${isReelAnimated ? ' animated' : ''}`} style={{ transform: `translateX(-${56 + reelPosition * 122}px)` }}>
             {rouletteReelPrizes.map((prize, index) => (
               <div key={`${prize.id}-${index}`} className={`roulette-reel-prize${prize.id === 'chatgpt-plus' ? ' chatgpt-prize' : ''}`}>
                 <span className="roulette-prize-icon">
@@ -1330,6 +1332,7 @@ function StoreApp() {
   const [productPaymentStatus, setProductPaymentStatus] = useState('')
   const [isProductPaymentOpen, setIsProductPaymentOpen] = useState(false)
   const [isTopUpPanelOpen, setIsTopUpPanelOpen] = useState(false)
+  const [isCouponListOpen, setIsCouponListOpen] = useState(false)
   const [balance, setBalance] = useState(0)
   const [orders, setOrders] = useState([])
   const [productStockCounts, setProductStockCounts] = useState(() => defaultProductStockCounts)
@@ -1337,6 +1340,7 @@ function StoreApp() {
   const [canSpinRoulette, setCanSpinRoulette] = useState(true)
   const [isRouletteSpinning, setIsRouletteSpinning] = useState(false)
   const [rouletteReelPosition, setRouletteReelPosition] = useState(2)
+  const [isRouletteReelAnimated, setIsRouletteReelAnimated] = useState(false)
   const [rouletteError, setRouletteError] = useState('')
   const text = translations[language]
   const rouletteCopy = rouletteText[language]
@@ -1435,7 +1439,7 @@ function StoreApp() {
         setRouletteSpin(spin)
         if (spin?.prize?.id) {
           const prizeIndex = Math.max(0, roulettePrizes.findIndex((prize) => prize.id === spin.prize.id))
-          setRouletteReelPosition(25 + prizeIndex)
+          setRouletteReelPosition(roulettePrizes.length + prizeIndex)
         }
       })
       .catch(() => {
@@ -1467,13 +1471,14 @@ function StoreApp() {
       })
       .then(({ spin, canSpin = false, balance: updatedBalance, order, stockCounts }) => {
         const prizeIndex = Math.max(0, roulettePrizes.findIndex((prize) => prize.id === spin?.prize?.id))
-        setRouletteReelPosition((current) => {
-          const nextCycleStart = current + 20
-          const offset = (prizeIndex - (nextCycleStart % roulettePrizes.length) + roulettePrizes.length) % roulettePrizes.length
-          return nextCycleStart + offset
-        })
+        const restingPosition = roulettePrizes.length + prizeIndex
+        const targetPosition = restingPosition + roulettePrizes.length * 5
+        setIsRouletteReelAnimated(true)
+        window.requestAnimationFrame(() => setRouletteReelPosition(targetPosition))
         setCanSpinRoulette(canSpin)
         window.setTimeout(() => {
+          setIsRouletteReelAnimated(false)
+          setRouletteReelPosition(restingPosition)
           setRouletteSpin(spin)
           setBalance(Number(updatedBalance) || 0)
           if (order) setOrders((current) => [order, ...current])
@@ -1720,6 +1725,7 @@ function StoreApp() {
           canSpin={canSpinRoulette}
           isSpinning={isRouletteSpinning}
           reelPosition={rouletteReelPosition}
+          isReelAnimated={isRouletteReelAnimated}
           error={rouletteError}
           onSpin={handleRouletteSpin}
         />
@@ -1764,7 +1770,13 @@ function StoreApp() {
                 </button>
               ))}
             </div>
-            {availableRouletteCoupon ? (
+            <button type="button" className="coupon-list-toggle" onClick={() => setIsCouponListOpen((current) => !current)}>
+              <span>{language === 'ru' ? 'Применить купон' : language === 'zh' ? '使用优惠券' : 'Apply coupon'}</span>
+              <b>{isCouponListOpen ? '−' : '+'}</b>
+            </button>
+            {isCouponListOpen ? (
+              <div className="coupon-list">
+                {availableRouletteCoupon ? (
               <button
                 type="button"
                 className={`roulette-coupon${promoCode === availableRouletteCoupon ? ' active' : ''}`}
@@ -1781,6 +1793,10 @@ function StoreApp() {
                 </span>
                 <b>{promoCode === availableRouletteCoupon ? (language === 'ru' ? 'Выбран' : language === 'zh' ? '已选择' : 'Selected') : (language === 'ru' ? 'Выбрать' : language === 'zh' ? '选择' : 'Select')}</b>
               </button>
+                ) : (
+                  <p>{language === 'ru' ? 'Нет доступных купонов' : language === 'zh' ? '暂无可用优惠券' : 'No coupons available'}</p>
+                )}
+              </div>
             ) : null}
             <label className="promo-code-field">
               <span>{text.promoCodeLabel}</span>
