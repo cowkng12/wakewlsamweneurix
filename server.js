@@ -878,9 +878,11 @@ app.get('/api/roulette/:telegramId', async (request, response) => {
 
   const spin = rouletteSpins[telegramId]
   const prize = spin ? roulettePrizes.find((item) => item.id === spin.prizeId) : null
+  const isAdmin = Boolean(adminChatId && telegramId === adminChatId)
 
   response.json({
-    canSpin: !spin,
+    canSpin: isAdmin || !spin,
+    isAdmin,
     spin: spin && prize ? { ...spin, prize: roulettePrizePayload(prize, spin) } : null,
   })
 })
@@ -889,6 +891,7 @@ app.post('/api/roulette/spin', async (request, response) => {
   const telegramUser = resolveTelegramUser(request.body)
   const telegramId = String(telegramUser?.id || '').trim()
   const language = deliveryLanguage(request.body?.language)
+  const isAdmin = Boolean(adminChatId && telegramId === adminChatId)
 
   if (!telegramId) {
     response.status(400).json({ error: 'Open the app through Telegram to spin' })
@@ -899,7 +902,7 @@ app.post('/api/roulette/spin', async (request, response) => {
     return
   }
 
-  if (rouletteSpins[telegramId]) {
+  if (rouletteSpins[telegramId] && !isAdmin) {
     response.status(409).json({ error: 'Free spin has already been used' })
     return
   }
@@ -949,7 +952,8 @@ app.post('/api/roulette/spin', async (request, response) => {
   }
 
   response.status(201).json({
-    canSpin: false,
+    canSpin: isAdmin,
+    isAdmin,
     spin: { ...spin, prize: roulettePrizePayload(prize, spin) },
     balance: balances.get(telegramId) || 0,
     order,

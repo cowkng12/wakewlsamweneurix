@@ -336,7 +336,7 @@ const roulettePrizes = [
   { id: 'balance-100', icon: '$', image: '', labels: { ru: '$1 на баланс', en: '$1 balance', zh: '$1 余额' } },
   { id: 'chatgpt-plus', icon: 'GPT', image: productAvatars.ChatGPT.src, labels: { ru: 'ChatGPT Plus', en: 'ChatGPT Plus', zh: 'ChatGPT Plus' } },
 ]
-const rouletteReelPrizes = Array.from({ length: 7 }, () => roulettePrizes).flat()
+const rouletteReelPrizes = Array.from({ length: 40 }, () => roulettePrizes).flat()
 
 const rouletteText = {
   ru: {
@@ -1272,7 +1272,7 @@ function RoulettePanel({ language, spin, canSpin, isSpinning, reelPosition, erro
           <span className="roulette-pointer" aria-hidden="true" />
           <div className="roulette-reel" style={{ transform: `translateX(-${56 + reelPosition * 122}px)` }}>
             {rouletteReelPrizes.map((prize, index) => (
-              <div key={`${prize.id}-${index}`} className="roulette-reel-prize">
+              <div key={`${prize.id}-${index}`} className={`roulette-reel-prize${prize.id === 'chatgpt-plus' ? ' chatgpt-prize' : ''}`}>
                 <span className="roulette-prize-icon">
                   {prize.image ? <img src={prize.image} alt="" /> : prize.icon}
                 </span>
@@ -1291,7 +1291,7 @@ function RoulettePanel({ language, spin, canSpin, isSpinning, reelPosition, erro
         <article className="roulette-result">
           <span>{copy.won}</span>
           <div>
-            <span className="roulette-result-icon">
+            <span className={`roulette-result-icon${wonPrize?.id === 'chatgpt-plus' ? ' chatgpt-prize' : ''}`}>
               {wonPrizeView?.image ? <img src={wonPrizeView.image} alt="" /> : wonPrizeView?.icon}
             </span>
             <strong>{wonPrizeView?.labels[language] || wonPrize.productTitle}</strong>
@@ -1306,7 +1306,7 @@ function RoulettePanel({ language, spin, canSpin, isSpinning, reelPosition, erro
         <div>
           {roulettePrizes.map((prize) => (
             <article key={prize.id}>
-              <span className="roulette-list-icon">
+              <span className={`roulette-list-icon${prize.id === 'chatgpt-plus' ? ' chatgpt-prize' : ''}`}>
                 {prize.image ? <img src={prize.image} alt="" loading="lazy" /> : prize.icon}
               </span>
               <strong>{prize.labels[language]}</strong>
@@ -1465,10 +1465,14 @@ function StoreApp() {
         if (!response.ok) throw new Error(data.error || 'Roulette request failed')
         return data
       })
-      .then(({ spin, balance: updatedBalance, order, stockCounts }) => {
+      .then(({ spin, canSpin = false, balance: updatedBalance, order, stockCounts }) => {
         const prizeIndex = Math.max(0, roulettePrizes.findIndex((prize) => prize.id === spin?.prize?.id))
-        setRouletteReelPosition(25 + prizeIndex)
-        setCanSpinRoulette(false)
+        setRouletteReelPosition((current) => {
+          const nextCycleStart = current + 20
+          const offset = (prizeIndex - (nextCycleStart % roulettePrizes.length) + roulettePrizes.length) % roulettePrizes.length
+          return nextCycleStart + offset
+        })
+        setCanSpinRoulette(canSpin)
         window.setTimeout(() => {
           setRouletteSpin(spin)
           setBalance(Number(updatedBalance) || 0)
