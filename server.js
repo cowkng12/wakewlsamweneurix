@@ -86,6 +86,7 @@ const activationSiteUrl = process.env.ACTIVATION_SITE_URL?.trim() || `${webAppUr
 const keepAliveUrl = process.env.KEEP_ALIVE_URL?.trim() || webAppUrl
 const keepAliveEnabled = process.env.KEEP_ALIVE_ENABLED !== 'false'
 const keepAliveIntervalMs = Number(process.env.KEEP_ALIVE_INTERVAL_MS || 5 * 60 * 1000)
+const maintenanceMode = process.env.MAINTENANCE_MODE !== 'false'
 
 const products = {
   'chatgpt-plus-ready': { title: 'ChatGPT Plus Ready Account', price: 2 },
@@ -161,19 +162,22 @@ const promoCodes = {
 }
 
 const roulettePrizes = [
-  { id: 'balance-025', type: 'balance', amount: 0.25, weight: 28.75 },
+  { id: 'balance-025', type: 'balance', amount: 0.25, weight: 31.75 },
   { id: 'balance-050', type: 'balance', amount: 0.5, weight: 24 },
   { id: 'promo-20', type: 'promo', discountPercent: 20, weight: 22 },
   { id: 'balance-100', type: 'balance', amount: 1, weight: 20 },
-  { id: 'chatgpt-plus', type: 'product', productId: 'chatgpt-plus-ready', weight: 5 },
+  { id: 'chatgpt-plus', type: 'product', productId: 'chatgpt-plus-ready', weight: 2 },
   { id: 'cursor-pro', type: 'product', productId: 'cursor-pro', weight: 0.2 },
   { id: 'claude-pro', type: 'product', productId: 'claude-pro', weight: 0.05 },
 ]
+const rouletteSpinPromoCodes = {
+  CLAUDE100: { code: 'CLAUDE100', prizeId: 'claude-pro', maxRedemptions: 1 },
+}
 
-const stockCountsVersion = 4
+const stockCountsVersion = 5
 
 function clampStockCount(value) {
-  return Math.max(4, Math.min(25, value))
+  return Math.max(4, Math.min(48, value))
 }
 
 function stableHash(input) {
@@ -181,7 +185,7 @@ function stableHash(input) {
 }
 
 function defaultStockForProduct(productId, product) {
-  if (productId === 'chatgpt-plus-ready') return 24
+  if (productId === 'chatgpt-plus-ready') return 48
   if (productId === 'chatgpt-go') return 15
   if (productId === 'chatgpt-business-seat') return 12
   if (productId === 'chatgpt-pro-ready') return 8
@@ -211,7 +215,11 @@ function normalizeStockCounts(rawStore = {}) {
     return { ...defaults, ...storedCounts }
   }
 
-  return defaults
+  return {
+    ...defaults,
+    ...storedCounts,
+    'chatgpt-plus-ready': 48,
+  }
 }
 
 const store = await loadStore()
@@ -225,7 +233,7 @@ const botUsers = store.botUsers
 const referrals = store.referrals
 const stockCounts = store.stockCounts
 const rouletteSpins = store.rouletteSpins
-const topupAmounts = [1, 1.5, ...Array.from({ length: 20 }, (_, index) => (index + 1) * 5)]
+const rouletteSpinPromoRedemptions = store.rouletteSpinPromoRedemptions
 const issuedAccessKeys = new Set(Object.keys(activations))
 
 function normalizeStore(rawStore = {}) {
@@ -239,6 +247,7 @@ function normalizeStore(rawStore = {}) {
     botUsers: rawStore.botUsers && typeof rawStore.botUsers === 'object' ? rawStore.botUsers : {},
     referrals: rawStore.referrals && typeof rawStore.referrals === 'object' ? rawStore.referrals : {},
     rouletteSpins: rawStore.rouletteSpins && typeof rawStore.rouletteSpins === 'object' ? rawStore.rouletteSpins : {},
+    rouletteSpinPromoRedemptions: rawStore.rouletteSpinPromoRedemptions && typeof rawStore.rouletteSpinPromoRedemptions === 'object' ? rawStore.rouletteSpinPromoRedemptions : {},
     stockCounts: normalizeStockCounts(rawStore),
     stockCountsVersion,
   }
@@ -312,12 +321,12 @@ async function loadStore() {
       console.error('Store load failed', error)
     }
 
-    return { orders: [], topups: [], balances: {}, activations: {}, refbotUsers: [], promoRedemptions: {}, botUsers: {}, referrals: {}, rouletteSpins: {}, stockCounts: defaultProductStockCounts(), stockCountsVersion }
+    return { orders: [], topups: [], balances: {}, activations: {}, refbotUsers: [], promoRedemptions: {}, botUsers: {}, referrals: {}, rouletteSpins: {}, rouletteSpinPromoRedemptions: {}, stockCounts: defaultProductStockCounts(), stockCountsVersion }
   }
 }
 
 async function saveStore() {
-  const snapshot = { orders, topups, balances: Object.fromEntries(balances), activations, refbotUsers: Array.from(refbotUsers), promoRedemptions, botUsers, referrals, rouletteSpins, stockCounts, stockCountsVersion }
+  const snapshot = { orders, topups, balances: Object.fromEntries(balances), activations, refbotUsers: Array.from(refbotUsers), promoRedemptions, botUsers, referrals, rouletteSpins, rouletteSpinPromoRedemptions, stockCounts, stockCountsVersion }
 
   try {
     if (await saveSupabaseStore(snapshot)) {
@@ -374,6 +383,11 @@ async function refreshStore() {
     delete rouletteSpins[telegramId]
   })
   Object.assign(rouletteSpins, freshStore.rouletteSpins)
+
+  Object.keys(rouletteSpinPromoRedemptions).forEach((code) => {
+    delete rouletteSpinPromoRedemptions[code]
+  })
+  Object.assign(rouletteSpinPromoRedemptions, freshStore.rouletteSpinPromoRedemptions)
 
   Object.keys(stockCounts).forEach((productId) => {
     delete stockCounts[productId]
@@ -653,6 +667,28 @@ function selectRoulettePrize() {
   return roulettePrizes[0]
 }
 
+function resolveRouletteSpinPromo(promoCode) {
+  const normalizedCode = String(promoCode || '').trim().toUpperCase()
+
+  if (!normalizedCode) return null
+
+  const promo = rouletteSpinPromoCodes[normalizedCode]
+
+  if (!promo) {
+    throw new Error('Invalid spin promo code')
+  }
+
+  if (rouletteSpinPromoRedemptions[normalizedCode]) {
+    throw new Error('Spin promo code has already been used')
+  }
+
+  return promo
+}
+
+function isSupportedTopupAmount(amount) {
+  return Number.isFinite(amount) && amount >= 1.5 && amount <= 100
+}
+
 function roulettePrizePayload(prize, spin) {
   return {
     id: prize.id,
@@ -833,10 +869,14 @@ app.use(cors())
 app.use(express.json())
 
 app.get('/api/config', (request, response) => {
+  const telegramId = String(request.query.telegramId || '').trim()
+
   response.json({
     sellerUrl,
     products,
     walletPayments: walletPayOptions,
+    maintenance: maintenanceMode && (!adminChatId || telegramId !== adminChatId),
+    isAdmin: Boolean(adminChatId && telegramId === adminChatId),
   })
 })
 
@@ -886,11 +926,12 @@ app.get('/api/roulette/:telegramId', async (request, response) => {
   const isAdmin = Boolean(adminChatId && telegramId === adminChatId)
   const normalizedSpin = spin ? {
     ...spin,
+    freeSpinUsed: spin.freeSpinUsed ?? true,
     couponDiscountPercent: Number(spin.couponDiscountPercent || (!spin.promoUsed && spin.promoCode ? 20 : 0)),
   } : null
 
   response.json({
-    canSpin: isAdmin || !spin,
+    canSpin: isAdmin || !normalizedSpin?.freeSpinUsed,
     isAdmin,
     spin: normalizedSpin && prize ? { ...normalizedSpin, prize: roulettePrizePayload(prize, normalizedSpin) } : null,
   })
@@ -901,6 +942,7 @@ app.post('/api/roulette/spin', async (request, response) => {
   const telegramId = String(telegramUser?.id || '').trim()
   const language = deliveryLanguage(request.body?.language)
   const isAdmin = Boolean(adminChatId && telegramId === adminChatId)
+  let spinPromo = null
 
   if (!telegramId) {
     response.status(400).json({ error: 'Open the app through Telegram to spin' })
@@ -911,15 +953,27 @@ app.post('/api/roulette/spin', async (request, response) => {
     return
   }
 
-  if (rouletteSpins[telegramId] && !isAdmin) {
+  try {
+    spinPromo = resolveRouletteSpinPromo(request.body?.promoCode)
+  } catch (error) {
+    response.status(400).json({ error: error.message })
+    return
+  }
+
+  const previousSpin = rouletteSpins[telegramId]
+  const freeSpinUsed = previousSpin?.freeSpinUsed ?? Boolean(previousSpin)
+
+  if (freeSpinUsed && !isAdmin && !spinPromo) {
     response.status(409).json({ error: 'Free spin has already been used' })
     return
   }
 
-  const prize = selectRoulettePrize()
-  const previousSpin = rouletteSpins[telegramId]
+  const prize = spinPromo
+    ? roulettePrizes.find((item) => item.id === spinPromo.prizeId)
+    : selectRoulettePrize()
   const spin = {
     prizeId: prize.id,
+    freeSpinUsed: spinPromo ? freeSpinUsed : true,
     promoCode: previousSpin?.promoUsed
       ? `SPIN-${telegramId}-${Math.random().toString(36).slice(2, 6)}`.toUpperCase()
       : previousSpin?.promoCode || `SPIN-${telegramId}`,
@@ -960,6 +1014,12 @@ app.post('/api/roulette/spin', async (request, response) => {
   }
 
   rouletteSpins[telegramId] = spin
+  if (spinPromo) {
+    rouletteSpinPromoRedemptions[spinPromo.code] = {
+      telegramId,
+      redeemedAt: spin.createdAt,
+    }
+  }
   await saveStore()
 
   if (order) {
@@ -985,7 +1045,7 @@ app.post('/api/roulette/spin', async (request, response) => {
   }
 
   response.status(201).json({
-    canSpin: isAdmin,
+    canSpin: isAdmin || !spin.freeSpinUsed,
     isAdmin,
     spin: { ...spin, prize: roulettePrizePayload(prize, spin) },
     balance: balances.get(telegramId) || 0,
@@ -1019,7 +1079,7 @@ app.post('/api/topups', async (request, response) => {
   const normalizedAmount = Number(amount)
   const telegramId = String(telegramUser?.id || '').trim()
 
-  if (!topupAmounts.includes(normalizedAmount)) {
+  if (!isSupportedTopupAmount(normalizedAmount)) {
     response.status(400).json({ error: 'Unsupported top-up amount' })
     return
   }
@@ -1111,7 +1171,7 @@ app.post('/api/topups/wallet', async (request, response) => {
   const telegramId = String(telegramUser?.id || '').trim()
   const walletPayOption = walletPayOptions.find((option) => option.id === networkId)
 
-  if (!topupAmounts.includes(normalizedAmount)) {
+  if (!isSupportedTopupAmount(normalizedAmount)) {
     response.status(400).json({ error: 'Unsupported top-up amount' })
     return
   }
@@ -1189,7 +1249,7 @@ app.post('/api/topups/paypage', async (request, response) => {
   const normalizedAmount = Number(amount)
   const telegramId = String(telegramUser?.id || '').trim()
 
-  if (!topupAmounts.includes(normalizedAmount)) {
+  if (!isSupportedTopupAmount(normalizedAmount)) {
     response.status(400).json({ error: 'Unsupported top-up amount' })
     return
   }

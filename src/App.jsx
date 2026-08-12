@@ -270,16 +270,16 @@ const sellerUsername = 'metifrysell'
 const defaultApiBase = import.meta.env.VITE_API_BASE_URL?.trim() || (import.meta.env.DEV ? 'http://localhost:3001' : '')
 const languages = ['ru', 'en', 'zh']
 const productGroups = ['Все', 'ChatGPT', 'Grok', 'Claude', 'Cursor', 'Kimi', 'Search', 'Coding', 'Image', 'Video', 'Voice', 'Productivity', 'API', 'Perplexity', 'Gemini', 'Copilot', 'Midjourney', 'Runway', 'Suno', 'Kling', 'Leonardo AI', 'ElevenLabs', 'Canva', 'Notion AI', 'Poe']
-const topupAmounts = [1, 1.5, ...Array.from({ length: 20 }, (_, index) => (index + 1) * 5)]
+const topupAmounts = [1.5, ...Array.from({ length: 20 }, (_, index) => (index + 1) * 5)]
 const defaultProductStockCounts = (() => {
   const counts = {}
 
-  const clampStockCount = (value) => Math.max(4, Math.min(25, value))
+  const clampStockCount = (value) => Math.max(4, Math.min(48, value))
   const stableHash = (input) =>
     String(input).split('').reduce((hash, char) => ((hash << 5) - hash + char.charCodeAt(0)) | 0, 0)
 
   const defaultStockForProduct = (product) => {
-    if (product.id === 'chatgpt-plus-ready') return 24
+    if (product.id === 'chatgpt-plus-ready') return 48
     if (product.id === 'chatgpt-go') return 15
     if (product.id === 'chatgpt-business-seat') return 12
     if (product.id === 'chatgpt-pro-ready') return 8
@@ -1252,7 +1252,7 @@ const storeHeroTitles = {
   zh: 'AI жњЌеЉЎи®ўй…',
 }
 
-function RoulettePanel({ language, spin, canSpin, isSpinning, reelPosition, isReelAnimated, error, onSpin }) {
+function RoulettePanel({ language, spin, canSpin, isSpinning, reelPosition, isReelAnimated, error, promoCode, onPromoCodeChange, onSpin }) {
   const copy = rouletteText[language]
   const wonPrize = spin?.prize
   const wonPrizeView = roulettePrizes.find((prize) => prize.id === wonPrize?.id)
@@ -1283,8 +1283,17 @@ function RoulettePanel({ language, spin, canSpin, isSpinning, reelPosition, isRe
             ))}
           </div>
         </div>
-        <button className="roulette-spin-button" type="button" disabled={!canSpin || isSpinning} onClick={onSpin}>
-          <span>{isSpinning ? copy.spinning : canSpin ? copy.spin : copy.used}</span>
+        <label className="roulette-promo-field">
+          <span>{language === 'ru' ? 'Промокод на прокрутку' : language === 'zh' ? '旋转优惠码' : 'Spin promo code'}</span>
+          <input
+            value={promoCode}
+            onChange={(event) => onPromoCodeChange(event.target.value.toUpperCase())}
+            placeholder={language === 'ru' ? 'Введите промокод' : language === 'zh' ? '输入优惠码' : 'Enter promo code'}
+            autoComplete="off"
+          />
+        </label>
+        <button className="roulette-spin-button" type="button" disabled={(!canSpin && !promoCode.trim()) || isSpinning} onClick={onSpin}>
+          <span>{isSpinning ? copy.spinning : canSpin || promoCode.trim() ? copy.spin : copy.used}</span>
         </button>
       </div>
       {error ? <p className="roulette-error">{error}</p> : null}
@@ -1326,6 +1335,7 @@ function StoreApp() {
   const [activeTab, setActiveTab] = useState('catalog')
   const [activeGroup, setActiveGroup] = useState('Все')
   const [selectedTopUpAmount, setSelectedTopUpAmount] = useState(topupAmounts[0])
+  const [customTopUpAmount, setCustomTopUpAmount] = useState('')
   const [promoCode, setPromoCode] = useState('')
   const [isPromoApplied, setIsPromoApplied] = useState(false)
   const [topUpStatus, setTopUpStatus] = useState('')
@@ -1342,6 +1352,8 @@ function StoreApp() {
   const [rouletteReelPosition, setRouletteReelPosition] = useState(2)
   const [isRouletteReelAnimated, setIsRouletteReelAnimated] = useState(false)
   const [rouletteError, setRouletteError] = useState('')
+  const [roulettePromoCode, setRoulettePromoCode] = useState('')
+  const [maintenance, setMaintenance] = useState(null)
   const text = translations[language]
   const rouletteCopy = rouletteText[language]
   const rouletteCouponDiscount = Number(rouletteSpin?.couponDiscountPercent || rouletteSpin?.prize?.couponDiscountPercent || 0)
@@ -1378,6 +1390,16 @@ function StoreApp() {
       document.body.classList.remove('modal-open')
     }
   }, [isTopUpPanelOpen])
+
+  useEffect(() => {
+    const telegramId = currentTelegramUser()?.id || ''
+    const apiBase = import.meta.env.VITE_API_BASE_URL?.trim() || defaultApiBase
+
+    fetch(`${apiBase}/api/config?telegramId=${encodeURIComponent(telegramId)}`)
+      .then((response) => response.json())
+      .then((config) => setMaintenance(Boolean(config.maintenance)))
+      .catch(() => setMaintenance(true))
+  }, [])
 
   useEffect(() => {
     const telegramId = currentTelegramUser()?.id
@@ -1463,7 +1485,7 @@ function StoreApp() {
     fetch(`${apiBase}/api/roulette/spin`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegramUser, telegramInitData: currentTelegramInitData(), language }),
+      body: JSON.stringify({ telegramUser, telegramInitData: currentTelegramInitData(), language, promoCode: roulettePromoCode.trim().toUpperCase() }),
     })
       .then(async (response) => {
         const data = await response.json().catch(() => ({}))
@@ -1481,14 +1503,15 @@ function StoreApp() {
           setIsRouletteReelAnimated(false)
           setRouletteReelPosition(restingPosition)
           setRouletteSpin(spin)
+          setRoulettePromoCode('')
           setBalance(Number(updatedBalance) || 0)
           if (order) setOrders((current) => [order, ...current])
           if (stockCounts) setProductStockCounts((current) => ({ ...current, ...stockCounts }))
           setIsRouletteSpinning(false)
         }, 3600)
       })
-      .catch(() => {
-        setRouletteError(rouletteCopy.error)
+      .catch((error) => {
+        setRouletteError(error.message || rouletteCopy.error)
         setIsRouletteSpinning(false)
       })
   }
@@ -1552,6 +1575,12 @@ function StoreApp() {
   const handleWalletTopUp = () => {
     const apiBase = import.meta.env.VITE_API_BASE_URL?.trim() || defaultApiBase
     const normalizedPromoCode = promoCode.trim().toUpperCase()
+    const normalizedCustomAmount = Number(customTopUpAmount)
+
+    if (customTopUpAmount && (!Number.isFinite(normalizedCustomAmount) || normalizedCustomAmount < 1.5 || normalizedCustomAmount > 100)) {
+      setTopUpStatus(language === 'ru' ? 'Введите сумму от $1.50 до $100.' : language === 'zh' ? '请输入 $1.50 到 $100 之间的金额。' : 'Enter an amount from $1.50 to $100.')
+      return
+    }
 
     if (normalizedPromoCode && !isPromoApplied) {
       setIsPromoApplied(true)
@@ -1596,6 +1625,22 @@ function StoreApp() {
       .catch((error) => {
         setTopUpStatus(error.message === 'Open the app through Telegram to top up balance' ? text.telegramUserRequired : error.message)
       })
+  }
+
+  if (maintenance === null) {
+    return <main className="maintenance-page" />
+  }
+
+  if (maintenance) {
+    return (
+      <main className="maintenance-page">
+        <section>
+          <span>AivoraHub</span>
+          <h1>Сервис на техническом обслуживании</h1>
+          <p>Скоро возобновим работу.</p>
+        </section>
+      </main>
+    )
   }
 
   return (
@@ -1728,6 +1773,11 @@ function StoreApp() {
           reelPosition={rouletteReelPosition}
           isReelAnimated={isRouletteReelAnimated}
           error={rouletteError}
+          promoCode={roulettePromoCode}
+          onPromoCodeChange={(value) => {
+            setRoulettePromoCode(value)
+            setRouletteError('')
+          }}
           onSpin={handleRouletteSpin}
         />
       )}
@@ -1763,6 +1813,7 @@ function StoreApp() {
                   className={selectedTopUpAmount === amount ? 'active' : ''}
                   onClick={() => {
                     setSelectedTopUpAmount(amount)
+                    setCustomTopUpAmount('')
                     setIsPromoApplied(false)
                     setTopUpStatus('')
                   }}
@@ -1771,6 +1822,31 @@ function StoreApp() {
                 </button>
               ))}
             </div>
+            <label className="custom-topup-field">
+              <span>{language === 'ru' ? 'Своя сумма' : language === 'zh' ? '自定义金额' : 'Custom amount'}</span>
+              <div>
+                <b>$</b>
+                <input
+                  type="number"
+                  min="1.5"
+                  max="100"
+                  step="0.01"
+                  inputMode="decimal"
+                  value={customTopUpAmount}
+                  placeholder="1.50"
+                  onChange={(event) => {
+                    const value = event.target.value
+                    setCustomTopUpAmount(value)
+                    const amount = Number(value)
+                    if (!value) setSelectedTopUpAmount(topupAmounts[0])
+                    else if (Number.isFinite(amount) && amount >= 1.5 && amount <= 100) setSelectedTopUpAmount(amount)
+                    setIsPromoApplied(false)
+                    setTopUpStatus('')
+                  }}
+                />
+              </div>
+              <small>{language === 'ru' ? 'Минимум $1.50' : language === 'zh' ? '最低 $1.50' : 'Minimum $1.50'}</small>
+            </label>
             <button type="button" className="coupon-list-toggle" onClick={() => setIsCouponListOpen((current) => !current)}>
               <span>{language === 'ru' ? 'Применить купон' : language === 'zh' ? '使用优惠券' : 'Apply coupon'}</span>
               <b>{isCouponListOpen ? '−' : '+'}</b>
