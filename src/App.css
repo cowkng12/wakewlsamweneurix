@@ -114,20 +114,25 @@
 
 .launch-brand {
   position: absolute;
-  top: 31%;
-  font-size: clamp(34px, 10vw, 58px);
+  top: 20%;
+  font-size: clamp(44px, 13vw, 76px);
   font-weight: 900;
   letter-spacing: 0;
   opacity: 0;
   animation: launch-brand-in 0.65s ease 0.12s forwards;
 }
 
+.launch-brand b {
+  color: #287cff;
+  font-weight: inherit;
+}
+
 .launch-flight {
   position: absolute;
-  top: 55%;
+  top: 56%;
   left: 50%;
-  width: 128px;
-  height: 156px;
+  width: 190px;
+  height: 232px;
   opacity: 0;
   transform: translate(-50%, -42%) scale(0.82);
   animation: launch-rocket-ready 0.45s ease 0.42s forwards, launch-rocket-fly 1.35s cubic-bezier(0.45, 0, 0.72, 0.3) 1.05s forwards;
