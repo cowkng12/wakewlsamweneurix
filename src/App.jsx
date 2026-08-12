@@ -329,6 +329,26 @@ const promoBonuses = {
   '100SUBS': 30,
 }
 
+const roulettePrizes = [
+  { id: 'balance-025', icon: '$', image: '', labels: { ru: '$0.25 на баланс', en: '$0.25 balance', zh: '$0.25 余额' } },
+  { id: 'balance-050', icon: '$', image: '', labels: { ru: '$0.50 на баланс', en: '$0.50 balance', zh: '$0.50 余额' } },
+  { id: 'promo-20', icon: '%', image: '', labels: { ru: 'Промокод 20%', en: '20% promo code', zh: '20% 优惠码' } },
+  { id: 'balance-100', icon: '$', image: '', labels: { ru: '$1 на баланс', en: '$1 balance', zh: '$1 余额' } },
+  { id: 'chatgpt-plus', icon: 'GPT', image: productAvatars.ChatGPT.src, labels: { ru: 'ChatGPT Plus', en: 'ChatGPT Plus', zh: 'ChatGPT Plus' } },
+]
+
+const rouletteText = {
+  ru: {
+    tab: 'Рулетка', title: 'Рулетка призов', lead: 'Первый прокрут бесплатно', spin: 'Крутить бесплатно', spinning: 'Крутим...', used: 'Бесплатный прокрут использован', prizes: 'Что можно выиграть', won: 'Ваш приз', error: 'Не удалось прокрутить. Попробуйте позже.', promoHint: 'Используйте этот персональный код при следующем пополнении.', balanceHint: 'Приз уже зачислен на ваш баланс.', productHint: 'Товар добавлен в заказы, данные отправлены в бот.', telegram: 'Откройте мини-приложение через Telegram.',
+  },
+  en: {
+    tab: 'Roulette', title: 'Prize roulette', lead: 'Your first spin is free', spin: 'Spin for free', spinning: 'Spinning...', used: 'Free spin already used', prizes: 'Available prizes', won: 'You won', error: 'Could not spin. Try again later.', promoHint: 'Use this personal code on your next balance top-up.', balanceHint: 'The prize has been added to your balance.', productHint: 'The product is in Orders and access details were sent by the bot.', telegram: 'Open the mini app through Telegram.',
+  },
+  zh: {
+    tab: '幸运转盘', title: '奖品转盘', lead: '首次抽奖免费', spin: '免费抽奖', spinning: '抽奖中...', used: '免费抽奖已使用', prizes: '可赢取的奖品', won: '你赢得了', error: '抽奖失败，请稍后重试。', promoHint: '下次充值时使用此专属优惠码。', balanceHint: '奖品已存入你的余额。', productHint: '商品已加入订单，领取信息已由机器人发送。', telegram: '请通过 Telegram 打开小程序。',
+  },
+}
+
 const translations = {
   ru: {
     languageLabel: 'RU',
@@ -1229,6 +1249,79 @@ const storeHeroTitles = {
   zh: 'AI жњЌеЉЎи®ўй…',
 }
 
+function RoulettePanel({ language, spin, canSpin, isSpinning, rotation, error, onSpin }) {
+  const copy = rouletteText[language]
+  const wonPrize = spin?.prize
+  const wonPrizeView = roulettePrizes.find((prize) => prize.id === wonPrize?.id)
+  const prizeHint = wonPrize?.type === 'promo'
+    ? copy.promoHint
+    : wonPrize?.type === 'balance'
+      ? copy.balanceHint
+      : copy.productHint
+
+  return (
+    <section className="roulette-page">
+      <header className="roulette-heading">
+        <span>{copy.lead}</span>
+        <h1>{copy.title}</h1>
+      </header>
+
+      <div className="roulette-stage">
+        <span className="roulette-pointer" aria-hidden="true" />
+        <div className="roulette-wheel-shell">
+          <div className="roulette-wheel" style={{ transform: `rotate(${rotation}deg)` }}>
+            {roulettePrizes.map((prize, index) => {
+              const angle = index * (360 / roulettePrizes.length)
+              return (
+                <div key={prize.id} className="roulette-wheel-prize" style={{ transform: `rotate(${angle}deg)` }}>
+                  <span className="roulette-prize-icon">
+                    {prize.image ? <img src={prize.image} alt="" /> : prize.icon}
+                  </span>
+                  <strong>{prize.labels[language]}</strong>
+                </div>
+              )
+            })}
+          </div>
+          <div className="roulette-hub">A</div>
+        </div>
+      </div>
+
+      <button className="roulette-spin-button" type="button" disabled={!canSpin || isSpinning} onClick={onSpin}>
+        {isSpinning ? copy.spinning : canSpin ? copy.spin : copy.used}
+      </button>
+      {error ? <p className="roulette-error">{error}</p> : null}
+
+      {wonPrize && !isSpinning ? (
+        <article className="roulette-result">
+          <span>{copy.won}</span>
+          <div>
+            <span className="roulette-result-icon">
+              {wonPrizeView?.image ? <img src={wonPrizeView.image} alt="" /> : wonPrizeView?.icon}
+            </span>
+            <strong>{wonPrizeView?.labels[language] || wonPrize.productTitle}</strong>
+          </div>
+          {wonPrize.promoCode ? <code>{wonPrize.promoCode}</code> : null}
+          <p>{prizeHint}</p>
+        </article>
+      ) : null}
+
+      <section className="roulette-prizes-list">
+        <h2>{copy.prizes}</h2>
+        <div>
+          {roulettePrizes.map((prize) => (
+            <article key={prize.id}>
+              <span className="roulette-list-icon">
+                {prize.image ? <img src={prize.image} alt="" loading="lazy" /> : prize.icon}
+              </span>
+              <strong>{prize.labels[language]}</strong>
+            </article>
+          ))}
+        </div>
+      </section>
+    </section>
+  )
+}
+
 function StoreApp() {
   const [selectedProduct, setSelectedProduct] = useState(products[0])
   const [language, setLanguage] = useState('en')
@@ -1244,8 +1337,17 @@ function StoreApp() {
   const [balance, setBalance] = useState(0)
   const [orders, setOrders] = useState([])
   const [productStockCounts, setProductStockCounts] = useState(() => defaultProductStockCounts)
+  const [rouletteSpin, setRouletteSpin] = useState(null)
+  const [canSpinRoulette, setCanSpinRoulette] = useState(true)
+  const [isRouletteSpinning, setIsRouletteSpinning] = useState(false)
+  const [rouletteRotation, setRouletteRotation] = useState(0)
+  const [rouletteError, setRouletteError] = useState('')
   const text = translations[language]
-  const promoBonus = promoBonuses[promoCode.trim().toUpperCase()] || 0
+  const rouletteCopy = rouletteText[language]
+  const availableRouletteCoupon = rouletteSpin?.prize?.type === 'promo' && !rouletteSpin?.promoUsed
+    ? rouletteSpin.prize.promoCode
+    : ''
+  const promoBonus = promoBonuses[promoCode.trim().toUpperCase()] || (availableRouletteCoupon === promoCode.trim().toUpperCase() ? 20 : 0)
   const topUpPayableAmount = Number((selectedTopUpAmount * (1 - promoBonus / 100)).toFixed(2))
   const visibleProducts = activeGroup === 'Все'
     ? products
@@ -1326,7 +1428,62 @@ function StoreApp() {
       .catch(() => {
         setProductStockCounts((current) => current)
       })
+
+    fetch(`${apiBase}/api/roulette/${telegramId}`)
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Roulette request failed')
+        return response.json()
+      })
+      .then(({ canSpin = false, spin = null }) => {
+        setCanSpinRoulette(canSpin)
+        setRouletteSpin(spin)
+      })
+      .catch(() => {
+        setCanSpinRoulette(false)
+      })
   }, [])
+
+  const handleRouletteSpin = () => {
+    const telegramUser = currentTelegramUser()
+
+    if (!telegramUser?.id) {
+      setRouletteError(rouletteCopy.telegram)
+      return
+    }
+
+    const apiBase = import.meta.env.VITE_API_BASE_URL?.trim() || defaultApiBase
+    setIsRouletteSpinning(true)
+    setRouletteError('')
+
+    fetch(`${apiBase}/api/roulette/spin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ telegramUser, telegramInitData: currentTelegramInitData(), language }),
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok) throw new Error(data.error || 'Roulette request failed')
+        return data
+      })
+      .then(({ spin, balance: updatedBalance, order, stockCounts }) => {
+        const prizeIndex = Math.max(0, roulettePrizes.findIndex((prize) => prize.id === spin?.prize?.id))
+        const sectorAngle = 360 / roulettePrizes.length
+        const targetAngle = 360 - prizeIndex * sectorAngle
+        setRouletteRotation((current) => current + 5 * 360 + targetAngle - (current % 360))
+        setCanSpinRoulette(false)
+        window.setTimeout(() => {
+          setRouletteSpin(spin)
+          setBalance(Number(updatedBalance) || 0)
+          if (order) setOrders((current) => [order, ...current])
+          if (stockCounts) setProductStockCounts((current) => ({ ...current, ...stockCounts }))
+          setIsRouletteSpinning(false)
+        }, 3600)
+      })
+      .catch(() => {
+        setRouletteError(rouletteCopy.error)
+        setIsRouletteSpinning(false)
+      })
+  }
 
   const handleProductSelect = (product) => {
     setSelectedProduct(product)
@@ -1534,7 +1691,7 @@ function StoreApp() {
             </div>
           ) : null}
         </>
-      ) : (
+      ) : activeTab === 'orders' ? (
         <section className="empty-panel">
           <p className="eyebrow">AivoraHub</p>
           <h2>{text.ordersTitle}</h2>
@@ -1554,6 +1711,16 @@ function StoreApp() {
             <p>{text.ordersText}</p>
           )}
         </section>
+      ) : (
+        <RoulettePanel
+          language={language}
+          spin={rouletteSpin}
+          canSpin={canSpinRoulette}
+          isSpinning={isRouletteSpinning}
+          rotation={rouletteRotation}
+          error={rouletteError}
+          onSpin={handleRouletteSpin}
+        />
       )}
 
       {isTopUpPanelOpen ? (
@@ -1595,6 +1762,24 @@ function StoreApp() {
                 </button>
               ))}
             </div>
+            {availableRouletteCoupon ? (
+              <button
+                type="button"
+                className={`roulette-coupon${promoCode === availableRouletteCoupon ? ' active' : ''}`}
+                onClick={() => {
+                  const isSelected = promoCode === availableRouletteCoupon
+                  setPromoCode(isSelected ? '' : availableRouletteCoupon)
+                  setIsPromoApplied(!isSelected)
+                  setTopUpStatus('')
+                }}
+              >
+                <span>
+                  <strong>20%</strong>
+                  <small>{language === 'ru' ? 'Ваш купон на пополнение' : language === 'zh' ? '你的充值优惠券' : 'Your top-up coupon'}</small>
+                </span>
+                <b>{promoCode === availableRouletteCoupon ? (language === 'ru' ? 'Выбран' : language === 'zh' ? '已选择' : 'Selected') : (language === 'ru' ? 'Выбрать' : language === 'zh' ? '选择' : 'Select')}</b>
+              </button>
+            ) : null}
             <label className="promo-code-field">
               <span>{text.promoCodeLabel}</span>
               <input
@@ -1617,7 +1802,7 @@ function StoreApp() {
       ) : null}
 
       <nav className="bottom-tabs" aria-label="Mini app tabs">
-        {Object.entries(text.tabs).map(([tab, label]) => (
+        {[...Object.entries(text.tabs), ['roulette', rouletteCopy.tab]].map(([tab, label]) => (
           <button
             key={tab}
             type="button"

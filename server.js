@@ -160,6 +160,14 @@ const promoCodes = {
   START10: { code: 'START10', discountPercent: 10, disabled: true },
 }
 
+const roulettePrizes = [
+  { id: 'balance-025', type: 'balance', amount: 0.25, weight: 30 },
+  { id: 'balance-050', type: 'balance', amount: 0.5, weight: 24 },
+  { id: 'promo-20', type: 'promo', discountPercent: 20, weight: 22 },
+  { id: 'balance-100', type: 'balance', amount: 1, weight: 16 },
+  { id: 'chatgpt-plus', type: 'product', productId: 'chatgpt-plus-ready', weight: 8 },
+]
+
 const stockCountsVersion = 4
 
 function clampStockCount(value) {
@@ -214,6 +222,7 @@ const promoRedemptions = store.promoRedemptions
 const botUsers = store.botUsers
 const referrals = store.referrals
 const stockCounts = store.stockCounts
+const rouletteSpins = store.rouletteSpins
 const topupAmounts = [1, 1.5, ...Array.from({ length: 20 }, (_, index) => (index + 1) * 5)]
 const issuedAccessKeys = new Set(Object.keys(activations))
 
@@ -227,6 +236,7 @@ function normalizeStore(rawStore = {}) {
     promoRedemptions: rawStore.promoRedemptions && typeof rawStore.promoRedemptions === 'object' ? rawStore.promoRedemptions : {},
     botUsers: rawStore.botUsers && typeof rawStore.botUsers === 'object' ? rawStore.botUsers : {},
     referrals: rawStore.referrals && typeof rawStore.referrals === 'object' ? rawStore.referrals : {},
+    rouletteSpins: rawStore.rouletteSpins && typeof rawStore.rouletteSpins === 'object' ? rawStore.rouletteSpins : {},
     stockCounts: normalizeStockCounts(rawStore),
     stockCountsVersion,
   }
@@ -300,12 +310,12 @@ async function loadStore() {
       console.error('Store load failed', error)
     }
 
-    return { orders: [], topups: [], balances: {}, activations: {}, refbotUsers: [], promoRedemptions: {}, botUsers: {}, referrals: {}, stockCounts: defaultProductStockCounts(), stockCountsVersion }
+    return { orders: [], topups: [], balances: {}, activations: {}, refbotUsers: [], promoRedemptions: {}, botUsers: {}, referrals: {}, rouletteSpins: {}, stockCounts: defaultProductStockCounts(), stockCountsVersion }
   }
 }
 
 async function saveStore() {
-  const snapshot = { orders, topups, balances: Object.fromEntries(balances), activations, refbotUsers: Array.from(refbotUsers), promoRedemptions, botUsers, referrals, stockCounts, stockCountsVersion }
+  const snapshot = { orders, topups, balances: Object.fromEntries(balances), activations, refbotUsers: Array.from(refbotUsers), promoRedemptions, botUsers, referrals, rouletteSpins, stockCounts, stockCountsVersion }
 
   try {
     if (await saveSupabaseStore(snapshot)) {
@@ -357,6 +367,11 @@ async function refreshStore() {
     delete referrals[telegramId]
   })
   Object.assign(referrals, freshStore.referrals)
+
+  Object.keys(rouletteSpins).forEach((telegramId) => {
+    delete rouletteSpins[telegramId]
+  })
+  Object.assign(rouletteSpins, freshStore.rouletteSpins)
 
   Object.keys(stockCounts).forEach((productId) => {
     delete stockCounts[productId]
@@ -570,7 +585,10 @@ function resolveTopupPromo({ promoCode, telegramId, amount }) {
     return null
   }
 
-  const promo = promoCodes[normalizedCode]
+  const roulettePromo = rouletteSpins[telegramId]?.promoCode === normalizedCode && !rouletteSpins[telegramId]?.promoUsed
+    ? { code: normalizedCode, discountPercent: 20, personal: true }
+    : null
+  const promo = roulettePromo || promoCodes[normalizedCode]
 
   if (!promo) {
     throw new Error('Invalid promo code')
@@ -612,6 +630,34 @@ function markPromoRedeemed(telegramId, promoCode) {
 
   if (!promoRedemptions[telegramId].includes(promoCode)) {
     promoRedemptions[telegramId].push(promoCode)
+  }
+
+  if (rouletteSpins[telegramId]?.promoCode === promoCode) {
+    rouletteSpins[telegramId].promoUsed = true
+  }
+}
+
+function selectRoulettePrize() {
+  const totalWeight = roulettePrizes.reduce((sum, prize) => sum + prize.weight, 0)
+  let cursor = Math.random() * totalWeight
+
+  for (const prize of roulettePrizes) {
+    cursor -= prize.weight
+    if (cursor <= 0) return prize
+  }
+
+  return roulettePrizes[0]
+}
+
+function roulettePrizePayload(prize, spin) {
+  return {
+    id: prize.id,
+    type: prize.type,
+    amount: prize.amount,
+    discountPercent: prize.discountPercent,
+    productId: prize.productId,
+    productTitle: prize.productId ? products[prize.productId]?.title : undefined,
+    promoCode: spin?.promoCode,
   }
 }
 
@@ -821,6 +867,94 @@ app.get('/api/balance/:telegramId', async (request, response) => {
   const balance = balances.get(telegramId) || 0
 
   response.json({ balance })
+})
+
+app.get('/api/roulette/:telegramId', async (request, response) => {
+  const telegramId = String(request.params.telegramId || '').trim()
+
+  if (!(await requireSubscribedTelegramId(telegramId, response))) {
+    return
+  }
+
+  const spin = rouletteSpins[telegramId]
+  const prize = spin ? roulettePrizes.find((item) => item.id === spin.prizeId) : null
+
+  response.json({
+    canSpin: !spin,
+    spin: spin && prize ? { ...spin, prize: roulettePrizePayload(prize, spin) } : null,
+  })
+})
+
+app.post('/api/roulette/spin', async (request, response) => {
+  const telegramUser = resolveTelegramUser(request.body)
+  const telegramId = String(telegramUser?.id || '').trim()
+  const language = deliveryLanguage(request.body?.language)
+
+  if (!telegramId) {
+    response.status(400).json({ error: 'Open the app through Telegram to spin' })
+    return
+  }
+
+  if (!(await requireSubscribedTelegramId(telegramId, response))) {
+    return
+  }
+
+  if (rouletteSpins[telegramId]) {
+    response.status(409).json({ error: 'Free spin has already been used' })
+    return
+  }
+
+  const prize = selectRoulettePrize()
+  const spin = {
+    prizeId: prize.id,
+    createdAt: new Date().toISOString(),
+  }
+  let order = null
+
+  if (prize.type === 'balance') {
+    const currentBalance = Number(balances.get(telegramId) || 0)
+    balances.set(telegramId, Number((currentBalance + prize.amount).toFixed(2)))
+  }
+
+  if (prize.type === 'promo') {
+    spin.promoCode = `SPIN20-${telegramId.slice(-4)}-${Math.random().toString(36).slice(2, 6)}`.toUpperCase()
+    spin.promoUsed = false
+  }
+
+  if (prize.type === 'product') {
+    const product = products[prize.productId]
+    order = {
+      id: `spin_${Date.now()}`,
+      productId: prize.productId,
+      productTitle: product.title,
+      price: 0,
+      status: 'roulette_prize',
+      paymentMethod: 'roulette',
+      accessKey: generateAccessKey(),
+      language,
+      customer: {},
+      telegramUser,
+      createdAt: spin.createdAt,
+    }
+    orders.unshift(order)
+    stockCounts[prize.productId] = Math.max(0, Number(stockCounts[prize.productId] || 0) - 1)
+    registerActivationKey(order.accessKey, telegramId, 0, 'roulette_prize')
+  }
+
+  rouletteSpins[telegramId] = spin
+  await saveStore()
+
+  if (order) {
+    await bot?.telegram.sendMessage(telegramId, purchaseDeliveryMessage(order.accessKey, language))
+  }
+
+  response.status(201).json({
+    canSpin: false,
+    spin: { ...spin, prize: roulettePrizePayload(prize, spin) },
+    balance: balances.get(telegramId) || 0,
+    order,
+    stockCounts,
+  })
 })
 
 app.post('/api/subscription/check', async (request, response) => {
