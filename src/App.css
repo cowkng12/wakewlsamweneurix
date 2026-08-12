@@ -1057,16 +1057,16 @@ body.modal-open {
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
 }
 
-.roulette-prize-icon.chatgpt-prize,
-.roulette-result-icon.chatgpt-prize,
-.roulette-list-icon.chatgpt-prize,
-.chatgpt-prize .roulette-prize-icon {
+.roulette-prize-icon.clean-logo-prize,
+.roulette-result-icon.clean-logo-prize,
+.roulette-list-icon.clean-logo-prize,
+.clean-logo-prize .roulette-prize-icon {
   border: 0;
   background: transparent;
   box-shadow: none;
 }
 
-.chatgpt-prize .roulette-prize-icon {
+.clean-logo-prize .roulette-prize-icon {
   width: 68px;
   height: 68px;
 }
@@ -1079,10 +1079,10 @@ body.modal-open {
   object-fit: contain;
 }
 
-.chatgpt-prize img,
-.roulette-prize-icon.chatgpt-prize img,
-.roulette-result-icon.chatgpt-prize img,
-.roulette-list-icon.chatgpt-prize img {
+.clean-logo-prize img,
+.roulette-prize-icon.clean-logo-prize img,
+.roulette-result-icon.clean-logo-prize img,
+.roulette-list-icon.clean-logo-prize img {
   width: 100%;
   height: 100%;
 }
@@ -1287,6 +1287,19 @@ body.modal-open {
 
 .coupon-list .roulette-coupon {
   margin-top: 8px;
+  gap: 8px;
+  padding: 6px 9px;
+}
+
+.coupon-list .roulette-coupon strong {
+  font-size: 16px;
+  line-height: 1.05;
+}
+
+.coupon-list .roulette-coupon small,
+.coupon-list .roulette-coupon b {
+  font-size: 10px;
+  line-height: 1.2;
 }
 
 .coupon-list > p {

@@ -587,8 +587,9 @@ function resolveTopupPromo({ promoCode, telegramId, amount }) {
     return null
   }
 
-  const roulettePromo = rouletteSpins[telegramId]?.promoCode === normalizedCode && !rouletteSpins[telegramId]?.promoUsed
-    ? { code: normalizedCode, discountPercent: 20, personal: true }
+  const rouletteDiscountPercent = Number(rouletteSpins[telegramId]?.couponDiscountPercent || (rouletteSpins[telegramId]?.promoCode ? 20 : 0))
+  const roulettePromo = rouletteSpins[telegramId]?.promoCode === normalizedCode && !rouletteSpins[telegramId]?.promoUsed && rouletteDiscountPercent > 0
+    ? { code: normalizedCode, discountPercent: rouletteDiscountPercent, personal: true }
     : null
   const promo = roulettePromo || promoCodes[normalizedCode]
 
@@ -636,6 +637,7 @@ function markPromoRedeemed(telegramId, promoCode) {
 
   if (rouletteSpins[telegramId]?.promoCode === promoCode) {
     rouletteSpins[telegramId].promoUsed = true
+    rouletteSpins[telegramId].couponDiscountPercent = 0
   }
 }
 
@@ -660,6 +662,7 @@ function roulettePrizePayload(prize, spin) {
     productId: prize.productId,
     productTitle: prize.productId ? products[prize.productId]?.title : undefined,
     promoCode: spin?.promoCode,
+    couponDiscountPercent: spin?.couponDiscountPercent,
   }
 }
 
@@ -881,11 +884,15 @@ app.get('/api/roulette/:telegramId', async (request, response) => {
   const spin = rouletteSpins[telegramId]
   const prize = spin ? roulettePrizes.find((item) => item.id === spin.prizeId) : null
   const isAdmin = Boolean(adminChatId && telegramId === adminChatId)
+  const normalizedSpin = spin ? {
+    ...spin,
+    couponDiscountPercent: Number(spin.couponDiscountPercent || (!spin.promoUsed && spin.promoCode ? 20 : 0)),
+  } : null
 
   response.json({
     canSpin: isAdmin || !spin,
     isAdmin,
-    spin: spin && prize ? { ...spin, prize: roulettePrizePayload(prize, spin) } : null,
+    spin: normalizedSpin && prize ? { ...normalizedSpin, prize: roulettePrizePayload(prize, normalizedSpin) } : null,
   })
 })
 
@@ -910,8 +917,14 @@ app.post('/api/roulette/spin', async (request, response) => {
   }
 
   const prize = selectRoulettePrize()
+  const previousSpin = rouletteSpins[telegramId]
   const spin = {
     prizeId: prize.id,
+    promoCode: previousSpin?.promoUsed
+      ? `SPIN-${telegramId}-${Math.random().toString(36).slice(2, 6)}`.toUpperCase()
+      : previousSpin?.promoCode || `SPIN-${telegramId}`,
+    promoUsed: previousSpin?.promoUsed ?? true,
+    couponDiscountPercent: Number(previousSpin?.couponDiscountPercent || (!previousSpin?.promoUsed && previousSpin?.promoCode ? 20 : 0)),
     createdAt: new Date().toISOString(),
   }
   let order = null
@@ -922,7 +935,7 @@ app.post('/api/roulette/spin', async (request, response) => {
   }
 
   if (prize.type === 'promo') {
-    spin.promoCode = `SPIN20-${telegramId.slice(-4)}-${Math.random().toString(36).slice(2, 6)}`.toUpperCase()
+    spin.couponDiscountPercent += prize.discountPercent
     spin.promoUsed = false
   }
 
@@ -958,7 +971,7 @@ app.post('/api/roulette/spin', async (request, response) => {
     const prizeLabel = prize.type === 'balance'
       ? `$${prize.amount} на баланс`
       : prize.type === 'promo'
-        ? `купон 20% (${spin.promoCode})`
+        ? `купон +20%, накоплено ${spin.couponDiscountPercent}% (${spin.promoCode})`
         : products[prize.productId]?.title || prize.id
 
     try {

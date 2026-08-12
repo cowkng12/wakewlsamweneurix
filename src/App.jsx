@@ -335,8 +335,8 @@ const roulettePrizes = [
   { id: 'promo-20', icon: '%', image: '', labels: { ru: 'Промокод 20%', en: '20% promo code', zh: '20% 优惠码' } },
   { id: 'balance-100', icon: '$', image: '', labels: { ru: '$1 на баланс', en: '$1 balance', zh: '$1 余额' } },
   { id: 'chatgpt-plus', icon: 'GPT', image: '/chatgpt-logo-white.png', labels: { ru: 'ChatGPT Plus', en: 'ChatGPT Plus', zh: 'ChatGPT Plus' } },
-  { id: 'cursor-pro', icon: 'CR', image: productAvatars.Cursor.src, labels: { ru: 'Cursor Pro', en: 'Cursor Pro', zh: 'Cursor Pro' } },
-  { id: 'claude-pro', icon: 'CL', image: productAvatars.Claude.src, labels: { ru: 'Claude Pro', en: 'Claude Pro', zh: 'Claude Pro' } },
+  { id: 'cursor-pro', icon: 'CR', image: '/cursor-logo-white.png', labels: { ru: 'Cursor Pro', en: 'Cursor Pro', zh: 'Cursor Pro' } },
+  { id: 'claude-pro', icon: 'CL', image: '/claude-logo-white.png', labels: { ru: 'Claude Pro', en: 'Claude Pro', zh: 'Claude Pro' } },
 ]
 const rouletteReelPrizes = Array.from({ length: 40 }, () => roulettePrizes).flat()
 
@@ -1274,7 +1274,7 @@ function RoulettePanel({ language, spin, canSpin, isSpinning, reelPosition, isRe
           <span className="roulette-pointer" aria-hidden="true" />
           <div className={`roulette-reel${isReelAnimated ? ' animated' : ''}`} style={{ transform: `translateX(-${56 + reelPosition * 122}px)` }}>
             {rouletteReelPrizes.map((prize, index) => (
-              <div key={`${prize.id}-${index}`} className={`roulette-reel-prize${prize.id === 'chatgpt-plus' ? ' chatgpt-prize' : ''}`}>
+              <div key={`${prize.id}-${index}`} className={`roulette-reel-prize${['chatgpt-plus', 'cursor-pro', 'claude-pro'].includes(prize.id) ? ' clean-logo-prize' : ''}`}>
                 <span className="roulette-prize-icon">
                   {prize.image ? <img src={prize.image} alt="" /> : prize.icon}
                 </span>
@@ -1293,7 +1293,7 @@ function RoulettePanel({ language, spin, canSpin, isSpinning, reelPosition, isRe
         <article className="roulette-result">
           <span>{copy.won}</span>
           <div>
-            <span className={`roulette-result-icon${wonPrize?.id === 'chatgpt-plus' ? ' chatgpt-prize' : ''}`}>
+            <span className={`roulette-result-icon${['chatgpt-plus', 'cursor-pro', 'claude-pro'].includes(wonPrize?.id) ? ' clean-logo-prize' : ''}`}>
               {wonPrizeView?.image ? <img src={wonPrizeView.image} alt="" /> : wonPrizeView?.icon}
             </span>
             <strong>{wonPrizeView?.labels[language] || wonPrize.productTitle}</strong>
@@ -1308,7 +1308,7 @@ function RoulettePanel({ language, spin, canSpin, isSpinning, reelPosition, isRe
         <div>
           {roulettePrizes.map((prize) => (
             <article key={prize.id}>
-              <span className={`roulette-list-icon${prize.id === 'chatgpt-plus' ? ' chatgpt-prize' : ''}`}>
+              <span className={`roulette-list-icon${['chatgpt-plus', 'cursor-pro', 'claude-pro'].includes(prize.id) ? ' clean-logo-prize' : ''}`}>
                 {prize.image ? <img src={prize.image} alt="" loading="lazy" /> : prize.icon}
               </span>
               <strong>{prize.labels[language]}</strong>
@@ -1344,11 +1344,12 @@ function StoreApp() {
   const [rouletteError, setRouletteError] = useState('')
   const text = translations[language]
   const rouletteCopy = rouletteText[language]
-  const availableRouletteCoupon = rouletteSpin?.prize?.type === 'promo' && !rouletteSpin?.promoUsed
+  const rouletteCouponDiscount = Number(rouletteSpin?.couponDiscountPercent || rouletteSpin?.prize?.couponDiscountPercent || 0)
+  const availableRouletteCoupon = rouletteCouponDiscount > 0 && !rouletteSpin?.promoUsed
     ? rouletteSpin.prize.promoCode
     : ''
-  const promoBonus = promoBonuses[promoCode.trim().toUpperCase()] || (availableRouletteCoupon === promoCode.trim().toUpperCase() ? 20 : 0)
-  const topUpPayableAmount = Number((selectedTopUpAmount * (1 - promoBonus / 100)).toFixed(2))
+  const promoBonus = promoBonuses[promoCode.trim().toUpperCase()] || (availableRouletteCoupon === promoCode.trim().toUpperCase() ? rouletteCouponDiscount : 0)
+  const topUpPayableAmount = Number(Math.max(0.1, selectedTopUpAmount * (1 - promoBonus / 100)).toFixed(2))
   const visibleProducts = activeGroup === 'Все'
     ? products
     : products.filter((product) => product.group === activeGroup)
@@ -1788,7 +1789,7 @@ function StoreApp() {
                 }}
               >
                 <span>
-                  <strong>20%</strong>
+                  <strong>{rouletteCouponDiscount}%</strong>
                   <small>{language === 'ru' ? 'Ваш купон на пополнение' : language === 'zh' ? '你的充值优惠券' : 'Your top-up coupon'}</small>
                 </span>
                 <b>{promoCode === availableRouletteCoupon ? (language === 'ru' ? 'Выбран' : language === 'zh' ? '已选择' : 'Selected') : (language === 'ru' ? 'Выбрать' : language === 'zh' ? '选择' : 'Select')}</b>
