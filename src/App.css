@@ -114,12 +114,12 @@
 
 .launch-brand {
   position: absolute;
-  top: 20%;
+  top: 24%;
   font-size: clamp(44px, 13vw, 76px);
   font-weight: 900;
   letter-spacing: 0;
   opacity: 0;
-  animation: launch-brand-in 0.65s ease 0.12s forwards;
+  animation: launch-brand-in 0.48s cubic-bezier(0.2, 0.8, 0.25, 1) 2s forwards;
 }
 
 .launch-brand b {
@@ -129,20 +129,41 @@
 
 .launch-flight {
   position: absolute;
-  top: 56%;
+  z-index: 1;
+  top: 54%;
   left: 50%;
-  width: 190px;
-  height: 232px;
+  width: 235px;
+  height: 310px;
   opacity: 0;
-  transform: translate(-50%, -42%) scale(0.82);
-  animation: launch-rocket-ready 0.45s ease 0.42s forwards, launch-rocket-fly 1.35s cubic-bezier(0.45, 0, 0.72, 0.3) 1.05s forwards;
+  transform: translate(-50%, -50%) scale(0.82);
+  animation: launch-rocket-ready 0.38s ease 0.2s forwards, launch-rocket-fly 1.35s cubic-bezier(0.45, 0, 0.72, 0.3) 0.68s forwards;
+}
+
+.launch-trail {
+  position: absolute;
+  z-index: 0;
+  top: 72%;
+  left: 50%;
+  width: 34px;
+  height: 48vh;
+  border-radius: 50% 50% 20px 20px;
+  opacity: 0;
+  transform: translateX(-50%) scaleY(0.2);
+  transform-origin: top;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(48, 137, 255, 0.58) 24%, rgba(15, 84, 255, 0.16) 64%, transparent);
+  filter: blur(7px);
+  animation: launch-trail-in 0.3s ease 0.62s forwards, launch-trail-out 0.48s ease 1.62s forwards;
 }
 
 .launch-rocket {
   display: block;
+  position: relative;
+  z-index: 1;
   width: 100%;
   height: 100%;
   object-fit: contain;
+  transform: rotate(0deg);
+  transform-origin: center;
   filter: drop-shadow(0 0 14px rgba(24, 113, 255, 0.7));
 }
 
@@ -198,14 +219,24 @@
 }
 
 @keyframes launch-rocket-ready {
-  from { opacity: 0; transform: translate(-50%, -28%) scale(0.72); }
-  to { opacity: 1; transform: translate(-50%, -42%) scale(1); }
+  from { opacity: 0; transform: translate(-50%, -38%) scale(0.72); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
 @keyframes launch-rocket-fly {
-  0% { opacity: 1; transform: translate(-50%, -42%) scale(1); }
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   78% { opacity: 1; }
-  100% { opacity: 0; transform: translate(-50%, -125vh) scale(0.76); }
+  100% { opacity: 0; transform: translate(-50%, -125vh) scale(0.82); }
+}
+
+@keyframes launch-trail-in {
+  from { opacity: 0; transform: translateX(-50%) scaleY(0.2); }
+  to { opacity: 0.92; transform: translateX(-50%) scaleY(1); }
+}
+
+@keyframes launch-trail-out {
+  from { opacity: 0.92; }
+  to { opacity: 0; }
 }
 
 @keyframes launch-loading-in { to { opacity: 1; } }

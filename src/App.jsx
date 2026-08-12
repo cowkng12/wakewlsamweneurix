@@ -866,6 +866,7 @@ function LaunchSplash({ progress }) {
     <main className="launch-splash" aria-label="AivoraHub loading">
       <div className="launch-brand"><span>Aivora</span><b>Hub</b></div>
       <div className="launch-flight" aria-hidden="true">
+        <span className="launch-trail" />
         <img className="launch-rocket" src="/aivora-launch-rocket.png" alt="" />
       </div>
       <div className="launch-progress">
