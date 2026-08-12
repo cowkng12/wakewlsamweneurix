@@ -861,6 +861,24 @@ function BrandLogo() {
   )
 }
 
+function LaunchSplash() {
+  return (
+    <main className="launch-splash" aria-label="AivoraHub loading">
+      <div className="launch-brand">AivoraHub</div>
+      <div className="launch-flight" aria-hidden="true">
+        <span className="launch-trail" />
+        <svg className="launch-rocket" viewBox="0 0 28 28">
+          <path d="M16.2 3.8c3.9.5 6.8 3.5 7.1 7.4l-5.8 5.8-6.9-6.9 5.6-6.3Z" />
+          <path d="M9.6 11.5 5.2 13l3.4 3.4 1.2-2.8M16.5 18.4l-2.8 1.2 3.4 3.4 1.5-4.4" />
+          <path d="M11 17 7.5 20.5" />
+          <circle cx="17.6" cy="9.8" r="1.7" />
+        </svg>
+      </div>
+      <div className="launch-loading" aria-hidden="true"><span /></div>
+    </main>
+  )
+}
+
 function ActivationPage() {
   const [language, setLanguage] = useState('en')
   const [key, setKey] = useState('')
@@ -1913,8 +1931,13 @@ function StoreApp() {
 }
 
 function App() {
+  const [isLaunching, setIsLaunching] = useState(true)
+
   useEffect(() => {
     document.title = ' '
+
+    const launchTimer = window.setTimeout(() => setIsLaunching(false), 2600)
+    return () => window.clearTimeout(launchTimer)
   }, [])
 
   if (window.location.pathname === '/activate') {
@@ -1923,6 +1946,10 @@ function App() {
 
   if (window.location.pathname.startsWith('/pay/')) {
     return <WalletPaymentPage />
+  }
+
+  if (isLaunching) {
+    return <LaunchSplash />
   }
 
   return <StoreApp />

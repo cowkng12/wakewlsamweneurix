@@ -100,6 +100,142 @@
   fill: var(--panel);
 }
 
+.launch-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  overflow: hidden;
+  background: #000;
+  color: #fff;
+  animation: launch-splash-exit 0.45s ease 2.15s both;
+}
+
+.launch-brand {
+  position: absolute;
+  top: 31%;
+  font-size: clamp(34px, 10vw, 58px);
+  font-weight: 900;
+  letter-spacing: 0;
+  opacity: 0;
+  animation: launch-brand-in 0.65s ease 0.12s forwards, launch-brand-rise 0.55s ease 1.75s forwards;
+}
+
+.launch-flight {
+  position: absolute;
+  top: 52%;
+  left: 50%;
+  width: 68px;
+  height: 68px;
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(-45deg) scale(0.82);
+  animation: launch-rocket-ready 0.45s ease 0.62s forwards, launch-rocket-fly 1.05s cubic-bezier(0.55, 0, 0.78, 0.32) 1.28s forwards;
+}
+
+.launch-rocket {
+  position: relative;
+  z-index: 2;
+  width: 68px;
+  height: 68px;
+  padding: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 50%;
+  background: #111;
+  fill: none;
+  stroke: #fff;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+  box-shadow: 0 0 34px rgba(255, 255, 255, 0.16);
+}
+
+.launch-rocket circle {
+  fill: #fff;
+}
+
+.launch-trail {
+  position: absolute;
+  top: 52px;
+  left: 31px;
+  width: 6px;
+  height: 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), transparent);
+  filter: blur(1px);
+  transform-origin: top;
+  animation: launch-trail-grow 0.8s ease 1.3s forwards;
+}
+
+.launch-loading {
+  position: absolute;
+  bottom: 16%;
+  width: min(180px, 44vw);
+  height: 2px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  opacity: 0;
+  animation: launch-loading-in 0.3s ease 0.25s forwards, launch-loading-out 0.25s ease 1.85s forwards;
+}
+
+.launch-loading span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: #fff;
+  transform: translateX(-100%);
+  animation: launch-loading-fill 1.55s cubic-bezier(0.3, 0.7, 0.2, 1) 0.35s forwards;
+}
+
+@keyframes launch-brand-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes launch-brand-rise {
+  to { opacity: 0; transform: translateY(-22px); }
+}
+
+@keyframes launch-rocket-ready {
+  from { opacity: 0; transform: translate(-50%, -35%) rotate(-45deg) scale(0.72); }
+  to { opacity: 1; transform: translate(-50%, -50%) rotate(-45deg) scale(1); }
+}
+
+@keyframes launch-rocket-fly {
+  0% { opacity: 1; transform: translate(-50%, -50%) rotate(-45deg) scale(1); }
+  72% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -115vh) rotate(-45deg) scale(0.72); }
+}
+
+@keyframes launch-trail-grow {
+  0% { height: 0; opacity: 0; }
+  25% { opacity: 0.9; }
+  100% { height: 150px; opacity: 0; }
+}
+
+@keyframes launch-loading-in { to { opacity: 1; } }
+@keyframes launch-loading-out { to { opacity: 0; } }
+@keyframes launch-loading-fill { to { transform: translateX(0); } }
+@keyframes launch-splash-exit { to { opacity: 0; visibility: hidden; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .launch-splash {
+    animation-duration: 0.15s;
+    animation-delay: 0.65s;
+  }
+
+  .launch-brand,
+  .launch-flight,
+  .launch-loading,
+  .launch-loading span {
+    animation: none;
+    opacity: 1;
+  }
+}
+
 .activation-eyebrow,
 .eyebrow {
   margin: 26px 0 8px;
