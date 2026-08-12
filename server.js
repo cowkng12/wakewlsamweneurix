@@ -171,7 +171,7 @@ const roulettePrizes = [
   { id: 'claude-pro', type: 'product', productId: 'claude-pro', weight: 0.05 },
 ]
 const rouletteSpinPromoCodes = {
-  CLAUDE100: { code: 'CLAUDE100', prizeId: 'claude-pro', maxRedemptions: 1 },
+  CLAUDE100: { code: 'CLAUDE100', prizeId: 'claude-pro', maxRedemptions: 2 },
 }
 
 const stockCountsVersion = 5
@@ -667,7 +667,14 @@ function selectRoulettePrize() {
   return roulettePrizes[0]
 }
 
-function resolveRouletteSpinPromo(promoCode) {
+function rouletteSpinPromoUses(code) {
+  const storedUses = rouletteSpinPromoRedemptions[code]
+
+  if (!storedUses) return []
+  return Array.isArray(storedUses) ? storedUses : [storedUses]
+}
+
+function resolveRouletteSpinPromo(promoCode, telegramId) {
   const normalizedCode = String(promoCode || '').trim().toUpperCase()
 
   if (!normalizedCode) return null
@@ -678,8 +685,14 @@ function resolveRouletteSpinPromo(promoCode) {
     throw new Error('Invalid spin promo code')
   }
 
-  if (rouletteSpinPromoRedemptions[normalizedCode]) {
-    throw new Error('Spin promo code has already been used')
+  const uses = rouletteSpinPromoUses(normalizedCode)
+
+  if (uses.some((redemption) => String(redemption.telegramId) === String(telegramId))) {
+    throw new Error('Spin promo code has already been used by this user')
+  }
+
+  if (promo.maxRedemptions && uses.length >= promo.maxRedemptions) {
+    throw new Error('Spin promo code activation limit reached')
   }
 
   return promo
@@ -954,7 +967,7 @@ app.post('/api/roulette/spin', async (request, response) => {
   }
 
   try {
-    spinPromo = resolveRouletteSpinPromo(request.body?.promoCode)
+    spinPromo = resolveRouletteSpinPromo(request.body?.promoCode, telegramId)
   } catch (error) {
     response.status(400).json({ error: error.message })
     return
@@ -1015,10 +1028,10 @@ app.post('/api/roulette/spin', async (request, response) => {
 
   rouletteSpins[telegramId] = spin
   if (spinPromo) {
-    rouletteSpinPromoRedemptions[spinPromo.code] = {
+    rouletteSpinPromoRedemptions[spinPromo.code] = [...rouletteSpinPromoUses(spinPromo.code), {
       telegramId,
       redeemedAt: spin.createdAt,
-    }
+    }]
   }
   await saveStore()
 
