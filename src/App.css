@@ -201,7 +201,7 @@
 
 .app-reveal {
   min-height: 100dvh;
-  filter: blur(0);
+  filter: none;
   opacity: 1;
   transition: filter 0.3s ease, opacity 0.3s ease;
 }
