@@ -140,17 +140,17 @@
 .launch-trail {
   position: absolute;
   z-index: 0;
-  top: 77%;
+  top: 82%;
   left: 47%;
   width: 25px;
-  height: 55vh;
+  height: 46vh;
   border-radius: 50% 50% 16px 16px;
   opacity: 0;
   transform: translate3d(-50%, 0, 0) scaleY(0.15);
   transform-origin: top;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(48, 137, 255, 0.64) 20%, rgba(15, 84, 255, 0.2) 60%, transparent);
   filter: blur(6px);
-  animation: launch-trail-in 0.28s ease 0.62s forwards, launch-trail-fly 1.35s cubic-bezier(0.45, 0, 0.72, 0.3) 0.68s forwards;
+  animation: launch-trail-in 0.28s ease 0.62s forwards;
 }
 
 .launch-rocket {
@@ -239,12 +239,6 @@
 @keyframes launch-trail-in {
   from { opacity: 0; transform: translate3d(-50%, 0, 0) scaleY(0.15); }
   to { opacity: 0.92; transform: translate3d(-50%, 0, 0) scaleY(1); }
-}
-
-@keyframes launch-trail-fly {
-  0% { opacity: 0.92; transform: translate3d(-50%, 0, 0) scaleY(1); }
-  70% { opacity: 0.72; }
-  100% { opacity: 0; transform: translate3d(-50%, -125vh, 0) scaleY(0.45); }
 }
 
 @keyframes launch-loading-in { to { opacity: 1; } }
