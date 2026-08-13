@@ -139,11 +139,11 @@
 
 .launch-trail {
   position: absolute;
-  z-index: 1;
-  top: 61%;
-  left: 50%;
-  width: 28px;
-  height: 45vh;
+  z-index: 0;
+  top: 77%;
+  left: 47%;
+  width: 25px;
+  height: 55vh;
   border-radius: 50% 50% 16px 16px;
   opacity: 0;
   transform: translate3d(-50%, 0, 0) scaleY(0.15);
