@@ -87,6 +87,7 @@ const keepAliveUrl = process.env.KEEP_ALIVE_URL?.trim() || webAppUrl
 const keepAliveEnabled = process.env.KEEP_ALIVE_ENABLED !== 'false'
 const keepAliveIntervalMs = Number(process.env.KEEP_ALIVE_INTERVAL_MS || 5 * 60 * 1000)
 const maintenanceMode = process.env.MAINTENANCE_MODE !== 'false'
+const rouletteCooldownMs = 24 * 60 * 60 * 1000
 
 const products = {
   'chatgpt-plus-ready': { title: 'ChatGPT Plus Ready Account', price: 2 },
@@ -942,10 +943,17 @@ app.get('/api/roulette/:telegramId', async (request, response) => {
     freeSpinUsed: spin.freeSpinUsed ?? true,
     couponDiscountPercent: Number(spin.couponDiscountPercent || (!spin.promoUsed && spin.promoCode ? 20 : 0)),
   } : null
+  const lastDailySpinAt = normalizedSpin?.lastDailySpinAt || normalizedSpin?.createdAt
+  const nextSpinAt = lastDailySpinAt
+    ? new Date(Date.parse(lastDailySpinAt) + rouletteCooldownMs).toISOString()
+    : null
+  const cooldownRemainingMs = nextSpinAt ? Math.max(0, Date.parse(nextSpinAt) - Date.now()) : 0
 
   response.json({
-    canSpin: isAdmin || !normalizedSpin?.freeSpinUsed,
+    canSpin: isAdmin || cooldownRemainingMs === 0,
     isAdmin,
+    nextSpinAt: isAdmin || cooldownRemainingMs === 0 ? null : nextSpinAt,
+    cooldownRemainingMs: isAdmin ? 0 : cooldownRemainingMs,
     spin: normalizedSpin && prize ? { ...normalizedSpin, prize: roulettePrizePayload(prize, normalizedSpin) } : null,
   })
 })
@@ -974,10 +982,23 @@ app.post('/api/roulette/spin', async (request, response) => {
   }
 
   const previousSpin = rouletteSpins[telegramId]
-  const freeSpinUsed = previousSpin?.freeSpinUsed ?? Boolean(previousSpin)
+  const lastDailySpinAt = previousSpin?.lastDailySpinAt || previousSpin?.createdAt
+  const nextSpinAt = lastDailySpinAt
+    ? new Date(Date.parse(lastDailySpinAt) + rouletteCooldownMs).toISOString()
+    : null
+  const cooldownRemainingMs = nextSpinAt ? Math.max(0, Date.parse(nextSpinAt) - Date.now()) : 0
 
-  if (freeSpinUsed && !isAdmin && !spinPromo) {
-    response.status(409).json({ error: 'Free spin has already been used' })
+  if (cooldownRemainingMs > 0 && !isAdmin && !spinPromo) {
+    const cooldownError = language === 'ru'
+      ? 'Возвращайтесь после окончания таймера'
+      : language === 'zh'
+        ? '请在倒计时结束后返回'
+        : 'Come back after the timer ends'
+    response.status(409).json({
+      error: cooldownError,
+      nextSpinAt,
+      cooldownRemainingMs,
+    })
     return
   }
 
@@ -986,7 +1007,8 @@ app.post('/api/roulette/spin', async (request, response) => {
     : selectRoulettePrize()
   const spin = {
     prizeId: prize.id,
-    freeSpinUsed: spinPromo ? freeSpinUsed : true,
+    freeSpinUsed: true,
+    lastDailySpinAt: spinPromo ? lastDailySpinAt || null : new Date().toISOString(),
     promoCode: previousSpin?.promoUsed
       ? `SPIN-${telegramId}-${Math.random().toString(36).slice(2, 6)}`.toUpperCase()
       : previousSpin?.promoCode || `SPIN-${telegramId}`,
@@ -1057,9 +1079,18 @@ app.post('/api/roulette/spin', async (request, response) => {
     }
   }
 
+  const dailyNextSpinAt = spin.lastDailySpinAt
+    ? new Date(Date.parse(spin.lastDailySpinAt) + rouletteCooldownMs).toISOString()
+    : null
+  const dailyCooldownRemainingMs = dailyNextSpinAt
+    ? Math.max(0, Date.parse(dailyNextSpinAt) - Date.now())
+    : 0
+
   response.status(201).json({
-    canSpin: isAdmin || !spin.freeSpinUsed,
+    canSpin: isAdmin || dailyCooldownRemainingMs === 0,
     isAdmin,
+    nextSpinAt: isAdmin || dailyCooldownRemainingMs === 0 ? null : dailyNextSpinAt,
+    cooldownRemainingMs: isAdmin ? 0 : dailyCooldownRemainingMs,
     spin: { ...spin, prize: roulettePrizePayload(prize, spin) },
     balance: balances.get(telegramId) || 0,
     order,

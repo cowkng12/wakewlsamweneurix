@@ -342,13 +342,13 @@ const rouletteReelPrizes = Array.from({ length: 40 }, () => roulettePrizes).flat
 
 const rouletteText = {
   ru: {
-    tab: 'Рулетка', title: 'Рулетка призов', lead: 'Первый прокрут бесплатно', spin: 'Крутить бесплатно', spinning: 'Крутим...', used: 'Бесплатный прокрут использован', prizes: 'Что можно выиграть', won: 'Ваш приз', error: 'Не удалось прокрутить. Попробуйте позже.', promoHint: 'Используйте этот персональный код при следующем пополнении.', balanceHint: 'Приз уже зачислен на ваш баланс.', productHint: 'Товар добавлен в заказы, данные отправлены в бот.', telegram: 'Откройте мини-приложение через Telegram.',
+    tab: 'Рулетка', title: 'Рулетка призов', lead: 'Один бесплатный прокрут каждые 24 часа', spin: 'Крутить бесплатно', spinning: 'Крутим...', used: 'Возвращайтесь через', cooldown: 'Возвращайтесь через', prizes: 'Что можно выиграть', won: 'Ваш приз', error: 'Не удалось прокрутить. Попробуйте позже.', promoHint: 'Используйте этот персональный код при следующем пополнении.', balanceHint: 'Приз уже зачислен на ваш баланс.', productHint: 'Товар добавлен в заказы, данные отправлены в бот.', telegram: 'Откройте мини-приложение через Telegram.',
   },
   en: {
-    tab: 'Roulette', title: 'Prize roulette', lead: 'Your first spin is free', spin: 'Spin for free', spinning: 'Spinning...', used: 'Free spin already used', prizes: 'Available prizes', won: 'You won', error: 'Could not spin. Try again later.', promoHint: 'Use this personal code on your next balance top-up.', balanceHint: 'The prize has been added to your balance.', productHint: 'The product is in Orders and access details were sent by the bot.', telegram: 'Open the mini app through Telegram.',
+    tab: 'Roulette', title: 'Prize roulette', lead: 'One free spin every 24 hours', spin: 'Spin for free', spinning: 'Spinning...', used: 'Come back in', cooldown: 'Come back in', prizes: 'Available prizes', won: 'You won', error: 'Could not spin. Try again later.', promoHint: 'Use this personal code on your next balance top-up.', balanceHint: 'The prize has been added to your balance.', productHint: 'The product is in Orders and access details were sent by the bot.', telegram: 'Open the mini app through Telegram.',
   },
   zh: {
-    tab: '幸运转盘', title: '奖品转盘', lead: '首次抽奖免费', spin: '免费抽奖', spinning: '抽奖中...', used: '免费抽奖已使用', prizes: '可赢取的奖品', won: '你赢得了', error: '抽奖失败，请稍后重试。', promoHint: '下次充值时使用此专属优惠码。', balanceHint: '奖品已存入你的余额。', productHint: '商品已加入订单，领取信息已由机器人发送。', telegram: '请通过 Telegram 打开小程序。',
+    tab: '幸运转盘', title: '奖品转盘', lead: '每24小时可免费抽奖一次', spin: '免费抽奖', spinning: '抽奖中...', used: '请在此时间后返回', cooldown: '请在此时间后返回', prizes: '可赢取的奖品', won: '你赢得了', error: '抽奖失败，请稍后重试。', promoHint: '下次充值时使用此专属优惠码。', balanceHint: '奖品已存入你的余额。', productHint: '商品已加入订单，领取信息已由机器人发送。', telegram: '请通过 Telegram 打开小程序。',
   },
 }
 
@@ -1268,7 +1268,16 @@ const storeHeroTitles = {
   zh: 'AI жњЌеЉЎи®ўй…',
 }
 
-function RoulettePanel({ language, spin, canSpin, isSpinning, reelPosition, isReelAnimated, error, promoCode, onPromoCodeChange, onSpin }) {
+function formatRouletteCooldown(milliseconds) {
+  const totalSeconds = Math.max(0, Math.ceil(milliseconds / 1000))
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+
+  return [hours, minutes, seconds].map((value) => String(value).padStart(2, '0')).join(':')
+}
+
+function RoulettePanel({ language, spin, canSpin, cooldownRemainingMs, isSpinning, reelPosition, isReelAnimated, error, promoCode, onPromoCodeChange, onSpin }) {
   const copy = rouletteText[language]
   const wonPrize = spin?.prize
   const wonPrizeView = roulettePrizes.find((prize) => prize.id === wonPrize?.id)
@@ -1309,8 +1318,9 @@ function RoulettePanel({ language, spin, canSpin, isSpinning, reelPosition, isRe
           />
         </label>
         <button className="roulette-spin-button" type="button" disabled={(!canSpin && !promoCode.trim()) || isSpinning} onClick={onSpin}>
-          <span>{isSpinning ? copy.spinning : canSpin || promoCode.trim() ? copy.spin : copy.used}</span>
+          <span>{isSpinning ? copy.spinning : canSpin || promoCode.trim() ? copy.spin : `${copy.used} ${formatRouletteCooldown(cooldownRemainingMs)}`}</span>
         </button>
+        {!canSpin && cooldownRemainingMs > 0 ? <p className="roulette-cooldown">{copy.cooldown}: <strong>{formatRouletteCooldown(cooldownRemainingMs)}</strong></p> : null}
       </div>
       {error ? <p className="roulette-error">{error}</p> : null}
 
@@ -1364,6 +1374,8 @@ function StoreApp() {
   const [productStockCounts, setProductStockCounts] = useState(() => defaultProductStockCounts)
   const [rouletteSpin, setRouletteSpin] = useState(null)
   const [canSpinRoulette, setCanSpinRoulette] = useState(true)
+  const [rouletteNextSpinAt, setRouletteNextSpinAt] = useState(null)
+  const [rouletteCooldownRemainingMs, setRouletteCooldownRemainingMs] = useState(0)
   const [isRouletteSpinning, setIsRouletteSpinning] = useState(false)
   const [rouletteReelPosition, setRouletteReelPosition] = useState(2)
   const [isRouletteReelAnimated, setIsRouletteReelAnimated] = useState(false)
@@ -1406,6 +1418,27 @@ function StoreApp() {
       document.body.classList.remove('modal-open')
     }
   }, [isTopUpPanelOpen])
+
+  useEffect(() => {
+    if (!rouletteNextSpinAt) {
+      return undefined
+    }
+
+    const updateCooldown = () => {
+      const remaining = Math.max(0, Date.parse(rouletteNextSpinAt) - Date.now())
+      setRouletteCooldownRemainingMs(remaining)
+
+      if (remaining === 0) {
+        setRouletteCooldownRemainingMs(0)
+        setRouletteNextSpinAt(null)
+        setCanSpinRoulette(true)
+      }
+    }
+
+    updateCooldown()
+    const timer = window.setInterval(updateCooldown, 1000)
+    return () => window.clearInterval(timer)
+  }, [rouletteNextSpinAt])
 
   useEffect(() => {
     const telegramId = currentTelegramUser()?.id || ''
@@ -1473,9 +1506,11 @@ function StoreApp() {
         if (!response.ok) throw new Error('Roulette request failed')
         return response.json()
       })
-      .then(({ canSpin = false, spin = null }) => {
+      .then(({ canSpin = false, spin = null, nextSpinAt = null, cooldownRemainingMs = 0 }) => {
         setCanSpinRoulette(canSpin)
         setRouletteSpin(spin)
+        setRouletteNextSpinAt(nextSpinAt)
+        setRouletteCooldownRemainingMs(Number(cooldownRemainingMs) || 0)
         if (spin?.prize?.id) {
           const prizeIndex = Math.max(0, roulettePrizes.findIndex((prize) => prize.id === spin.prize.id))
           setRouletteReelPosition(roulettePrizes.length + prizeIndex)
@@ -1505,16 +1540,25 @@ function StoreApp() {
     })
       .then(async (response) => {
         const data = await response.json().catch(() => ({}))
-        if (!response.ok) throw new Error(data.error || 'Roulette request failed')
+        if (!response.ok) {
+          if (data.nextSpinAt) {
+            setRouletteNextSpinAt(data.nextSpinAt)
+            setRouletteCooldownRemainingMs(Number(data.cooldownRemainingMs) || 0)
+            setCanSpinRoulette(false)
+          }
+          throw new Error(data.error || 'Roulette request failed')
+        }
         return data
       })
-      .then(({ spin, canSpin = false, balance: updatedBalance, order, stockCounts }) => {
+      .then(({ spin, canSpin = false, nextSpinAt = null, cooldownRemainingMs = 0, balance: updatedBalance, order, stockCounts }) => {
         const prizeIndex = Math.max(0, roulettePrizes.findIndex((prize) => prize.id === spin?.prize?.id))
         const restingPosition = roulettePrizes.length + prizeIndex
         const targetPosition = restingPosition + roulettePrizes.length * 5
         setIsRouletteReelAnimated(true)
         window.requestAnimationFrame(() => setRouletteReelPosition(targetPosition))
         setCanSpinRoulette(canSpin)
+        setRouletteNextSpinAt(nextSpinAt)
+        setRouletteCooldownRemainingMs(Number(cooldownRemainingMs) || 0)
         window.setTimeout(() => {
           setIsRouletteReelAnimated(false)
           setRouletteReelPosition(restingPosition)
@@ -1785,6 +1829,7 @@ function StoreApp() {
           language={language}
           spin={rouletteSpin}
           canSpin={canSpinRoulette}
+          cooldownRemainingMs={rouletteCooldownRemainingMs}
           isSpinning={isRouletteSpinning}
           reelPosition={rouletteReelPosition}
           isReelAnimated={isRouletteReelAnimated}

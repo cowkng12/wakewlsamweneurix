@@ -1342,6 +1342,18 @@ body.modal-open {
   cursor: default;
 }
 
+.roulette-cooldown {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.roulette-cooldown strong {
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
 .roulette-error {
   color: #fff;
   text-align: center;
