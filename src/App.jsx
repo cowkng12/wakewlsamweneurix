@@ -1263,9 +1263,9 @@ function ProductCard({ product, onSelect, active, text, stockCount }) {
 }
 
 const storeHeroTitles = {
-  ru: 'РџРѕРґРїРёСЃРєРё РЅР° AI-СЃРµСЂРІРёСЃС‹',
+  ru: 'Подписки на AI-сервисы',
   en: 'AI service subscriptions',
-  zh: 'AI жњЌеЉЎи®ўй…',
+  zh: 'AI 服务订阅',
 }
 
 function formatRouletteCooldown(milliseconds) {
