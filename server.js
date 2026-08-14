@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import cors from 'cors'
 import express from 'express'
+import { createHmac, timingSafeEqual } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -172,7 +173,9 @@ const roulettePrizes = [
   { id: 'claude-pro', type: 'product', productId: 'claude-pro', weight: 0.05 },
 ]
 const rouletteSpinPromoCodes = {
-  CLAUDE100: { code: 'CLAUDE100', prizeId: 'claude-pro', maxRedemptions: 2 },
+  CLAUDE100: { code: 'CLAUDE100', prizeId: 'claude-pro', adminOnly: true, unlimited: true },
+  CURSOR100: { code: 'CURSOR100', prizeId: 'cursor-pro', adminOnly: true, unlimited: true },
+  CHATGPT100: { code: 'CHATGPT100', prizeId: 'chatgpt-plus', adminOnly: true, unlimited: true },
 }
 
 const stockCountsVersion = 5
@@ -587,6 +590,31 @@ function userFromInitData(initData) {
   }
 }
 
+function verifiedUserFromInitData(initData) {
+  if (!botToken || !initData) return null
+
+  const parameters = new URLSearchParams(initData)
+  const receivedHash = parameters.get('hash')
+
+  if (!receivedHash) return null
+
+  const dataCheckString = [...parameters.entries()]
+    .filter(([key]) => key !== 'hash')
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, value]) => `${key}=${value}`)
+    .join('\n')
+  const secretKey = createHmac('sha256', 'WebAppData').update(botToken).digest()
+  const expectedHash = createHmac('sha256', secretKey).update(dataCheckString).digest('hex')
+  const receivedBuffer = Buffer.from(receivedHash, 'hex')
+  const expectedBuffer = Buffer.from(expectedHash, 'hex')
+
+  if (receivedBuffer.length !== expectedBuffer.length || !timingSafeEqual(receivedBuffer, expectedBuffer)) {
+    return null
+  }
+
+  return userFromInitData(initData)
+}
+
 function resolveTelegramUser({ telegramUser = null, telegramInitData = '' } = {}) {
   if (telegramUser?.id) {
     return telegramUser
@@ -675,7 +703,7 @@ function rouletteSpinPromoUses(code) {
   return Array.isArray(storedUses) ? storedUses : [storedUses]
 }
 
-function resolveRouletteSpinPromo(promoCode, telegramId) {
+function resolveRouletteSpinPromo(promoCode, telegramId, isAdmin) {
   const normalizedCode = String(promoCode || '').trim().toUpperCase()
 
   if (!normalizedCode) return null
@@ -684,6 +712,14 @@ function resolveRouletteSpinPromo(promoCode, telegramId) {
 
   if (!promo) {
     throw new Error('Invalid spin promo code')
+  }
+
+  if (promo.adminOnly && !isAdmin) {
+    throw new Error('This spin promo code is available only to the administrator')
+  }
+
+  if (promo.unlimited) {
+    return promo
   }
 
   const uses = rouletteSpinPromoUses(normalizedCode)
@@ -959,10 +995,11 @@ app.get('/api/roulette/:telegramId', async (request, response) => {
 })
 
 app.post('/api/roulette/spin', async (request, response) => {
-  const telegramUser = resolveTelegramUser(request.body)
+  const verifiedTelegramUser = verifiedUserFromInitData(request.body?.telegramInitData)
+  const telegramUser = verifiedTelegramUser || resolveTelegramUser(request.body)
   const telegramId = String(telegramUser?.id || '').trim()
   const language = deliveryLanguage(request.body?.language)
-  const isAdmin = Boolean(adminChatId && telegramId === adminChatId)
+  const isAdmin = Boolean(adminChatId && telegramId === adminChatId && verifiedTelegramUser)
   let spinPromo = null
 
   if (!telegramId) {
@@ -975,7 +1012,7 @@ app.post('/api/roulette/spin', async (request, response) => {
   }
 
   try {
-    spinPromo = resolveRouletteSpinPromo(request.body?.promoCode, telegramId)
+    spinPromo = resolveRouletteSpinPromo(request.body?.promoCode, telegramId, isAdmin)
   } catch (error) {
     response.status(400).json({ error: error.message })
     return
@@ -1049,7 +1086,7 @@ app.post('/api/roulette/spin', async (request, response) => {
   }
 
   rouletteSpins[telegramId] = spin
-  if (spinPromo) {
+  if (spinPromo && !spinPromo.unlimited) {
     rouletteSpinPromoRedemptions[spinPromo.code] = [...rouletteSpinPromoUses(spinPromo.code), {
       telegramId,
       redeemedAt: spin.createdAt,
