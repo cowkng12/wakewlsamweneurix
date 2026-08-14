@@ -1263,9 +1263,9 @@ function ProductCard({ product, onSelect, active, text, stockCount }) {
 }
 
 const storeHeroTitles = {
-  ru: 'Подписки на AI-сервисы',
+  ru: '\u041f\u043e\u0434\u043f\u0438\u0441\u043a\u0438 \u043d\u0430 AI-\u0441\u0435\u0440\u0432\u0438\u0441\u044b',
   en: 'AI service subscriptions',
-  zh: 'AI 服务订阅',
+  zh: 'AI \u670d\u52a1\u8ba2\u9605',
 }
 
 function formatRouletteCooldown(milliseconds) {
