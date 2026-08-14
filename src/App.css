@@ -1554,6 +1554,10 @@ body.modal-open {
 .coupon-list {
   display: grid;
   gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
 }
 
 .coupon-list .roulette-coupon {

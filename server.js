@@ -623,6 +623,30 @@ function resolveTelegramUser({ telegramUser = null, telegramInitData = '' } = {}
   return userFromInitData(telegramInitData)
 }
 
+function rouletteCouponsForSpin(spin, telegramId) {
+  if (!spin) return []
+
+  if (Array.isArray(spin.coupons)) {
+    return spin.coupons.filter((coupon) => coupon?.code).map((coupon) => ({
+      ...coupon,
+      code: String(coupon.code).trim().toUpperCase(),
+      discountPercent: 20,
+    }))
+  }
+
+  if (spin.promoUsed) return []
+
+  const accumulatedDiscount = Number(spin.couponDiscountPercent || (spin.promoCode ? 20 : 0))
+  const couponCount = Math.max(0, Math.round(accumulatedDiscount / 20))
+  const baseCode = String(spin.promoCode || `SPIN-${telegramId}`).trim().toUpperCase()
+
+  return Array.from({ length: couponCount }, (_, index) => ({
+    code: index === 0 ? baseCode : `${baseCode}-${index + 1}`,
+    discountPercent: 20,
+    createdAt: spin.createdAt,
+  }))
+}
+
 function resolveTopupPromo({ promoCode, telegramId, amount }) {
   const normalizedCode = String(promoCode || '').trim().toUpperCase()
 
@@ -630,9 +654,10 @@ function resolveTopupPromo({ promoCode, telegramId, amount }) {
     return null
   }
 
-  const rouletteDiscountPercent = Number(rouletteSpins[telegramId]?.couponDiscountPercent || (rouletteSpins[telegramId]?.promoCode ? 20 : 0))
-  const roulettePromo = rouletteSpins[telegramId]?.promoCode === normalizedCode && !rouletteSpins[telegramId]?.promoUsed && rouletteDiscountPercent > 0
-    ? { code: normalizedCode, discountPercent: rouletteDiscountPercent, personal: true }
+  const rouletteCoupon = rouletteCouponsForSpin(rouletteSpins[telegramId], telegramId)
+    .find((coupon) => coupon.code === normalizedCode && !coupon.usedAt)
+  const roulettePromo = rouletteCoupon
+    ? { code: normalizedCode, discountPercent: 20, personal: true }
     : null
   const promo = roulettePromo || promoCodes[normalizedCode]
 
@@ -672,15 +697,22 @@ function markPromoRedeemed(telegramId, promoCode) {
     return
   }
 
+  const normalizedPromoCode = String(promoCode).trim().toUpperCase()
+
   promoRedemptions[telegramId] = promoRedemptions[telegramId] || []
 
-  if (!promoRedemptions[telegramId].includes(promoCode)) {
-    promoRedemptions[telegramId].push(promoCode)
+  if (!promoRedemptions[telegramId].includes(normalizedPromoCode)) {
+    promoRedemptions[telegramId].push(normalizedPromoCode)
   }
 
-  if (rouletteSpins[telegramId]?.promoCode === promoCode) {
-    rouletteSpins[telegramId].promoUsed = true
-    rouletteSpins[telegramId].couponDiscountPercent = 0
+  if (rouletteSpins[telegramId]) {
+    const redeemedAt = new Date().toISOString()
+    rouletteSpins[telegramId].coupons = rouletteCouponsForSpin(rouletteSpins[telegramId], telegramId)
+      .map((coupon) => coupon.code === normalizedPromoCode ? { ...coupon, usedAt: redeemedAt } : coupon)
+    const nextCoupon = rouletteSpins[telegramId].coupons.find((coupon) => !coupon.usedAt)
+    rouletteSpins[telegramId].promoCode = nextCoupon?.code || null
+    rouletteSpins[telegramId].promoUsed = !nextCoupon
+    rouletteSpins[telegramId].couponDiscountPercent = nextCoupon ? 20 : 0
   }
 }
 
@@ -736,7 +768,7 @@ function resolveRouletteSpinPromo(promoCode, telegramId, isAdmin) {
 }
 
 function isSupportedTopupAmount(amount) {
-  return Number.isFinite(amount) && amount >= 1.5 && amount <= 100
+  return Number.isFinite(amount) && amount >= 1 && amount <= 100
 }
 
 function roulettePrizePayload(prize, spin) {
@@ -974,10 +1006,12 @@ app.get('/api/roulette/:telegramId', async (request, response) => {
   const spin = rouletteSpins[telegramId]
   const prize = spin ? roulettePrizes.find((item) => item.id === spin.prizeId) : null
   const isAdmin = Boolean(adminChatId && telegramId === adminChatId)
+  const coupons = rouletteCouponsForSpin(spin, telegramId)
   const normalizedSpin = spin ? {
     ...spin,
     freeSpinUsed: spin.freeSpinUsed ?? true,
-    couponDiscountPercent: Number(spin.couponDiscountPercent || (!spin.promoUsed && spin.promoCode ? 20 : 0)),
+    coupons,
+    couponDiscountPercent: coupons.some((coupon) => !coupon.usedAt) ? 20 : 0,
   } : null
   const lastDailySpinAt = normalizedSpin?.lastDailySpinAt || normalizedSpin?.createdAt
   const nextSpinAt = lastDailySpinAt
@@ -1042,15 +1076,15 @@ app.post('/api/roulette/spin', async (request, response) => {
   const prize = spinPromo
     ? roulettePrizes.find((item) => item.id === spinPromo.prizeId)
     : selectRoulettePrize()
+  const previousCoupons = rouletteCouponsForSpin(previousSpin, telegramId)
   const spin = {
     prizeId: prize.id,
     freeSpinUsed: true,
     lastDailySpinAt: spinPromo ? lastDailySpinAt || null : new Date().toISOString(),
-    promoCode: previousSpin?.promoUsed
-      ? `SPIN-${telegramId}-${Math.random().toString(36).slice(2, 6)}`.toUpperCase()
-      : previousSpin?.promoCode || `SPIN-${telegramId}`,
-    promoUsed: previousSpin?.promoUsed ?? true,
-    couponDiscountPercent: Number(previousSpin?.couponDiscountPercent || (!previousSpin?.promoUsed && previousSpin?.promoCode ? 20 : 0)),
+    promoCode: null,
+    promoUsed: true,
+    couponDiscountPercent: 0,
+    coupons: previousCoupons,
     createdAt: new Date().toISOString(),
   }
   let order = null
@@ -1061,7 +1095,14 @@ app.post('/api/roulette/spin', async (request, response) => {
   }
 
   if (prize.type === 'promo') {
-    spin.couponDiscountPercent += prize.discountPercent
+    const coupon = {
+      code: `SPIN-${telegramId}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`.toUpperCase(),
+      discountPercent: 20,
+      createdAt: spin.createdAt,
+    }
+    spin.coupons.push(coupon)
+    spin.promoCode = coupon.code
+    spin.couponDiscountPercent = 20
     spin.promoUsed = false
   }
 
@@ -1103,7 +1144,7 @@ app.post('/api/roulette/spin', async (request, response) => {
     const prizeLabel = prize.type === 'balance'
       ? `$${prize.amount} на баланс`
       : prize.type === 'promo'
-        ? `купон +20%, накоплено ${spin.couponDiscountPercent}% (${spin.promoCode})`
+        ? `купон 20% (${spin.promoCode})`
         : products[prize.productId]?.title || prize.id
 
     try {

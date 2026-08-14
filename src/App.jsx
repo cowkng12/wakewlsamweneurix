@@ -270,7 +270,7 @@ const sellerUsername = 'metifrysell'
 const defaultApiBase = import.meta.env.VITE_API_BASE_URL?.trim() || (import.meta.env.DEV ? 'http://localhost:3001' : '')
 const languages = ['ru', 'en', 'zh']
 const productGroups = ['Все', 'ChatGPT', 'Grok', 'Claude', 'Cursor', 'Kimi', 'Search', 'Coding', 'Image', 'Video', 'Voice', 'Productivity', 'API', 'Perplexity', 'Gemini', 'Copilot', 'Midjourney', 'Runway', 'Suno', 'Kling', 'Leonardo AI', 'ElevenLabs', 'Canva', 'Notion AI', 'Poe']
-const topupAmounts = [1.5, ...Array.from({ length: 20 }, (_, index) => (index + 1) * 5)]
+const topupAmounts = [1, ...Array.from({ length: 20 }, (_, index) => (index + 1) * 5)]
 const defaultProductStockCounts = (() => {
   const counts = {}
 
@@ -1384,11 +1384,12 @@ function StoreApp() {
   const [maintenance, setMaintenance] = useState(null)
   const text = translations[language]
   const rouletteCopy = rouletteText[language]
-  const rouletteCouponDiscount = Number(rouletteSpin?.couponDiscountPercent || rouletteSpin?.prize?.couponDiscountPercent || 0)
-  const availableRouletteCoupon = rouletteCouponDiscount > 0 && !rouletteSpin?.promoUsed
-    ? rouletteSpin.prize.promoCode
-    : ''
-  const promoBonus = promoBonuses[promoCode.trim().toUpperCase()] || (availableRouletteCoupon === promoCode.trim().toUpperCase() ? rouletteCouponDiscount : 0)
+  const availableRouletteCoupons = Array.isArray(rouletteSpin?.coupons)
+    ? rouletteSpin.coupons.filter((coupon) => coupon?.code && !coupon.usedAt)
+    : []
+  const normalizedPromoCode = promoCode.trim().toUpperCase()
+  const selectedRouletteCoupon = availableRouletteCoupons.find((coupon) => coupon.code === normalizedPromoCode)
+  const promoBonus = promoBonuses[normalizedPromoCode] || Number(selectedRouletteCoupon?.discountPercent || 0)
   const topUpPayableAmount = Number(Math.max(0.1, selectedTopUpAmount * (1 - promoBonus / 100)).toFixed(2))
   const visibleProducts = activeGroup === 'Все'
     ? products
@@ -1637,8 +1638,8 @@ function StoreApp() {
     const normalizedPromoCode = promoCode.trim().toUpperCase()
     const normalizedCustomAmount = Number(customTopUpAmount)
 
-    if (customTopUpAmount && (!Number.isFinite(normalizedCustomAmount) || normalizedCustomAmount < 1.5 || normalizedCustomAmount > 100)) {
-      setTopUpStatus(language === 'ru' ? 'Введите сумму от $1.50 до $100.' : language === 'zh' ? '请输入 $1.50 到 $100 之间的金额。' : 'Enter an amount from $1.50 to $100.')
+    if (customTopUpAmount && (!Number.isFinite(normalizedCustomAmount) || normalizedCustomAmount < 1 || normalizedCustomAmount > 100)) {
+      setTopUpStatus(language === 'ru' ? 'Введите сумму от $1 до $100.' : language === 'zh' ? '请输入 $1 到 $100 之间的金额。' : 'Enter an amount from $1 to $100.')
       return
     }
 
@@ -1889,24 +1890,24 @@ function StoreApp() {
                 <b>$</b>
                 <input
                   type="number"
-                  min="1.5"
+                  min="1"
                   max="100"
                   step="0.01"
                   inputMode="decimal"
                   value={customTopUpAmount}
-                  placeholder="1.50"
+                  placeholder="1.00"
                   onChange={(event) => {
                     const value = event.target.value
                     setCustomTopUpAmount(value)
                     const amount = Number(value)
                     if (!value) setSelectedTopUpAmount(topupAmounts[0])
-                    else if (Number.isFinite(amount) && amount >= 1.5 && amount <= 100) setSelectedTopUpAmount(amount)
+                    else if (Number.isFinite(amount) && amount >= 1 && amount <= 100) setSelectedTopUpAmount(amount)
                     setIsPromoApplied(false)
                     setTopUpStatus('')
                   }}
                 />
               </div>
-              <small>{language === 'ru' ? 'Минимум $1.50' : language === 'zh' ? '最低 $1.50' : 'Minimum $1.50'}</small>
+              <small>{language === 'ru' ? 'Минимум $1' : language === 'zh' ? '最低 $1' : 'Minimum $1'}</small>
             </label>
             <button type="button" className="coupon-list-toggle" onClick={() => setIsCouponListOpen((current) => !current)}>
               <span>{language === 'ru' ? 'Применить купон' : language === 'zh' ? '使用优惠券' : 'Apply coupon'}</span>
@@ -1914,23 +1915,29 @@ function StoreApp() {
             </button>
             {isCouponListOpen ? (
               <div className="coupon-list">
-                {availableRouletteCoupon ? (
-              <button
-                type="button"
-                className={`roulette-coupon${promoCode === availableRouletteCoupon ? ' active' : ''}`}
-                onClick={() => {
-                  const isSelected = promoCode === availableRouletteCoupon
-                  setPromoCode(isSelected ? '' : availableRouletteCoupon)
-                  setIsPromoApplied(!isSelected)
-                  setTopUpStatus('')
-                }}
-              >
-                <span>
-                  <strong>{rouletteCouponDiscount}%</strong>
-                  <small>{language === 'ru' ? 'Ваш купон на пополнение' : language === 'zh' ? '你的充值优惠券' : 'Your top-up coupon'}</small>
-                </span>
-                <b>{promoCode === availableRouletteCoupon ? (language === 'ru' ? 'Выбран' : language === 'zh' ? '已选择' : 'Selected') : (language === 'ru' ? 'Выбрать' : language === 'zh' ? '选择' : 'Select')}</b>
-              </button>
+                {availableRouletteCoupons.length ? (
+                  availableRouletteCoupons.map((coupon) => {
+                    const isSelected = normalizedPromoCode === coupon.code
+
+                    return (
+                      <button
+                        key={coupon.code}
+                        type="button"
+                        className={`roulette-coupon${isSelected ? ' active' : ''}`}
+                        onClick={() => {
+                          setPromoCode(isSelected ? '' : coupon.code)
+                          setIsPromoApplied(!isSelected)
+                          setTopUpStatus('')
+                        }}
+                      >
+                        <span>
+                          <strong>{Number(coupon.discountPercent) || 20}%</strong>
+                          <small>{language === 'ru' ? 'Купон на одно пополнение' : language === 'zh' ? '单次充值优惠券' : 'Single top-up coupon'}</small>
+                        </span>
+                        <b>{isSelected ? (language === 'ru' ? 'Выбран' : language === 'zh' ? '已选择' : 'Selected') : (language === 'ru' ? 'Выбрать' : language === 'zh' ? '选择' : 'Select')}</b>
+                      </button>
+                    )
+                  })
                 ) : (
                   <p>{language === 'ru' ? 'Нет доступных купонов' : language === 'zh' ? '暂无可用优惠券' : 'No coupons available'}</p>
                 )}
